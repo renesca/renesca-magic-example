@@ -43,7 +43,11 @@ object Main extends App {
       val dog = Animal.create("dog")
       val eats = Eats.create(snake, dog)
       zoo.add(eats)
-      tx.persistChanges(zoo)
+      val failure = tx.persistChanges(zoo)
+      failure.foreach(err => {
+        println(s"Error persisting changes: $failure")
+        tx.rollback
+      })
     }
   }
 

@@ -45,25 +45,25 @@ object Schema {
     def animals: Set[Animal] = nodesAs(Animal);
     def eats: Set[Eats] = relationsAs(Eats);
     def nodes: Set[Node] = Set.empty.++(animals);
-    def relations: (Set[_$3] forSome { 
-      type _$3 <: (Relation[_$9, _$12] forSome { 
-        type _$9;
-        type _$12
+    def relations: (Set[_$4] forSome { 
+      type _$4 <: (Relation[_$12, _$9] forSome { 
+        type _$12;
+        type _$9
       })
     }) = Set.empty.++(eats);
-    def abstractRelations: (Set[_$11] forSome { 
-      type _$11 <: (AbstractRelation[_$8, _$6] forSome { 
-        type _$8;
-        type _$6
+    def abstractRelations: (Set[_$13] forSome { 
+      type _$13 <: (AbstractRelation[_$11, _$8] forSome { 
+        type _$11;
+        type _$8
       })
     }) = Set.empty.++(eats);
-    def hyperRelations: (Set[_$10] forSome { 
-      type _$10 <: (HyperRelation[_$7, _$5, _$4, _$2, _$13] forSome { 
+    def hyperRelations: (Set[_$6] forSome { 
+      type _$6 <: (HyperRelation[_$10, _$7, _$5, _$3, _$2] forSome { 
+        type _$10;
         type _$7;
         type _$5;
-        type _$4;
-        type _$2;
-        type _$13
+        type _$3;
+        type _$2
       })
     }) = Set.empty
   }
