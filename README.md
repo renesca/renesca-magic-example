@@ -1,4 +1,4 @@
-# renesca-magic-example
+# renesca-magic example
 
 A simple example to demonstrate the features of the [renesca-magic](https://github.com/renesca/renesca-magic) library.
 
@@ -19,3 +19,8 @@ This will print
 ```
 ...
 ```
+
+## License
+Licensed under the [Apache License, Version 2.0][Apache]
+
+[Apache]: http://www.apache.org/licenses/LICENSE-2.0
