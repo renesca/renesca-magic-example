@@ -27,6 +27,7 @@ object Main extends App {
 
 
   {
+    // Simple schema with one Node type and one Relation type
     @macros.GraphSchema
     object Schema {
       @Graph trait Zoo {Nodes(Animal) }
@@ -38,9 +39,9 @@ object Main extends App {
 
     db.transaction { tx =>
       val zoo = Zoo.empty
-      val dog = Animal.create("dog")
       val snake = Animal.create("snake")
-      val eats = Eats.create(dog, snake)
+      val dog = Animal.create("dog")
+      val eats = Eats.create(snake, dog)
       zoo.add(eats)
       tx.persistChanges(zoo)
     }
