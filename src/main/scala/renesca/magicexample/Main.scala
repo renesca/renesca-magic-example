@@ -46,7 +46,6 @@ object Main extends App {
       val failure = tx.persistChanges(zoo)
       failure.foreach(err => {
         println(s"Error persisting changes: $failure")
-        tx.rollback
       })
     }
   }
