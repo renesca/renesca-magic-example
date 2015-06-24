@@ -27,30 +27,49 @@ object Main extends App {
 
 
   {
-    // Simple schema with one Node type and one Relation type
+    // Wrapping low level entities
     @macros.GraphSchema
-    object Schema {
-      @Graph trait Zoo {Nodes(Animal) }
+    object ExampleSchemaWrapping {
       @Node class Animal {val name: String }
-      @Relation class Eats(startNode: Animal, endNode: Animal)
+      @Node class Food {
+        val name: String;
+        var amount: Long
+      }
+      @Relation class Eats(startNode: Animal, endNode: Food)
     }
 
-    import Schema._
+    import ExampleSchemaWrapping._
+    
+    val animal = Animal.create("snake")
+    val food = Food.create(name = "cake", amount = 1000)
+    val eats = Eats.create(animal, food)
 
-    db.transaction { tx =>
-      val zoo = Zoo.empty
-      val snake = Animal.create("snake")
-      val dog = Animal.create("dog")
-      val eats = Eats.create(snake, dog)
-      zoo.add(eats)
-      val failure = tx.persistChanges(zoo)
-      failure.foreach(err => {
-        println(s"Error persisting changes: $failure")
-      })
-    }
+    food.amount -= 100
   }
 
 
+  {
+    // Wrapping induced subgraphs
+    @macros.GraphSchema
+    object ExampleSchemaSubgraph {
+      @Node class Animal {val name: String }
+      @Node class Food {
+        val name: String
+        var amount: Long
+      }
+      @Relation class Eats(startNode: Animal, endNode: Food)
+
+      @Graph trait Zoo {Nodes(Animal, Food) }
+    }
+
+    import ExampleSchemaSubgraph._
+
+    val zoo = Zoo(db.queryGraph("MATCH (a:ANIMAL)-[e:EATS]->(f:FOOD) RETURN a,e,f"))
+    val elefant = Animal.create("elefant")
+    zoo.add(elefant)
+    println(zoo.animals)
+    db.persistChanges(zoo)
+  }
 
 
 
