@@ -20,6 +20,19 @@ object ExampleSchemaWrapping {
       val node = wrap(raw.Node.create(labels));
       node.node.properties.update("name", name);
       node
+    };
+    def merge(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Animal = {
+      val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      node.node.properties.update("name", name);
+      node
+    };
+    def matches(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Animal = {
+      val node = wrap(raw.Node.matches(labels, matches = matches));
+      if (name.isDefined)
+        node.node.properties.update("name", name.get)
+      else
+        ();
+      node
     }
   };
   object Food extends NodeFactory[Food] {
@@ -30,6 +43,24 @@ object ExampleSchemaWrapping {
       val node = wrap(raw.Node.create(labels));
       node.node.properties.update("amount", amount);
       node.node.properties.update("name", name);
+      node
+    };
+    def merge(amount: Long, name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Food = {
+      val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      node.node.properties.update("amount", amount);
+      node.node.properties.update("name", name);
+      node
+    };
+    def matches(amount: Option[Long] = None, name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Food = {
+      val node = wrap(raw.Node.matches(labels, matches = matches));
+      if (amount.isDefined)
+        node.node.properties.update("amount", amount.get)
+      else
+        ();
+      if (name.isDefined)
+        node.node.properties.update("name", name.get)
+      else
+        ();
       node
     }
   };
@@ -52,6 +83,14 @@ object ExampleSchemaWrapping {
     def wrap(relation: raw.Relation) = Eats(Animal.wrap(relation.startNode), relation, Food.wrap(relation.endNode));
     def create(startNode: Animal, endNode: Food): Eats = {
       val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
+      relation
+    };
+    def merge(startNode: Animal, endNode: Food, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Eats = {
+      val relation = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
+      relation
+    };
+    def matches(startNode: Animal, endNode: Food, matches: Set[PropertyKey] = Set.empty): Eats = {
+      val relation = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
       relation
     }
   };

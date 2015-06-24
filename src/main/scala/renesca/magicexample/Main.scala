@@ -59,6 +59,7 @@ object Main extends App {
       }
       @Relation class Eats(startNode: Animal, endNode: Food)
 
+      // Relations between specified nodes will be induced
       @Graph trait Zoo {Nodes(Animal, Food) }
     }
 
@@ -68,8 +69,8 @@ object Main extends App {
     val elefant = Animal.create("elefant")
     val pizza = Food.create(name = "pizza", amount = 2)
     zoo.add(Eats.create(elefant, pizza))
-    println(zoo.animals) // elefant
-    println(zoo.relations) // elefant eats pizza (Relations between Nodes are induced)
+    zoo.animals // Set(elefant)
+    zoo.relations // Set(elefant eats pizza)
     db.persistChanges(zoo)
   }
 
@@ -103,9 +104,47 @@ object Main extends App {
     zoo.add(Eats.create(bello, wanda))
     zoo.add(Drinks.create(wanda, bello))
 
-    println(zoo.animals) // bello and wanda
+    zoo.animals // Set(bello, wanda)
     //TODO: there are no accessors for relation traits in graph ?!
-    //println(zoo.consumes)
+    //zoo.consumes
+  }
+
+  {
+    // Multiple inheritance, default property values
+    @macros.GraphSchema
+    object ExampleSchemaMultipleInheritance {
+      @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
+      @Node trait Timestamp { val timestamp: Long = System.currentTimeMillis }
+      @Node trait Taggable
+
+      @Node class Article extends Uuid with Timestamp with Taggable {val content:String}
+      @Node class Tag extends Uuid {val name:String}
+      @Relation class Categorizes(startNode:Tag, endNode:Taggable)
+      
+      @Graph trait Blog {Nodes(Article, Tag)}
+    }
+
+    import ExampleSchemaMultipleInheritance._
+    val initGraph = Blog.empty
+    initGraph.add(Tag.create(name="useful"))
+    initGraph.add(Tag.create(name="important"))
+    db.persistChanges(initGraph)
+
+    val blog = Blog(db.queryGraph("MATCH (t:TAG) return t"))
+
+    // automatically sets uuid and timestamp
+    val article = Article.create(content = "Some useful and important content") 
+
+    blog.add(article)
+
+    // set all tags on the article
+    blog.tags.foreach{ tag => 
+      Categorizes.create(tag, article)
+    }
+
+    blog.taggables // contains Set(article)
+
+    db.persistChanges(blog)
   }
 
 
