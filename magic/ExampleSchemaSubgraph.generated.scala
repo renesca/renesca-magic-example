@@ -17,22 +17,22 @@ object ExampleSchemaSubgraph {
     val labels = Set(raw.Label("ANIMAL"));
     def wrap(node: raw.Node) = new Animal(node);
     def create(name: String): Animal = {
-      val node = wrap(raw.Node.create(labels));
-      node.node.properties.update("name", name);
-      node
+      val wrapped = wrap(raw.Node.create(labels));
+      wrapped.node.properties.update("name", name);
+      wrapped
     };
     def merge(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Animal = {
-      val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      node.node.properties.update("name", name);
-      node
+      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      wrapped.node.properties.update("name", name);
+      wrapped
     };
     def matches(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Animal = {
-      val node = wrap(raw.Node.matches(labels, matches = matches));
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
       if (name.isDefined)
-        node.node.properties.update("name", name.get)
+        wrapped.node.properties.update("name", name.get)
       else
         ();
-      node
+      wrapped
     }
   };
   object Food extends NodeFactory[Food] {
@@ -40,28 +40,28 @@ object ExampleSchemaSubgraph {
     val labels = Set(raw.Label("FOOD"));
     def wrap(node: raw.Node) = new Food(node);
     def create(amount: Long, name: String): Food = {
-      val node = wrap(raw.Node.create(labels));
-      node.node.properties.update("amount", amount);
-      node.node.properties.update("name", name);
-      node
+      val wrapped = wrap(raw.Node.create(labels));
+      wrapped.node.properties.update("amount", amount);
+      wrapped.node.properties.update("name", name);
+      wrapped
     };
     def merge(amount: Long, name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Food = {
-      val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      node.node.properties.update("amount", amount);
-      node.node.properties.update("name", name);
-      node
+      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      wrapped.node.properties.update("amount", amount);
+      wrapped.node.properties.update("name", name);
+      wrapped
     };
     def matches(amount: Option[Long] = None, name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Food = {
-      val node = wrap(raw.Node.matches(labels, matches = matches));
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
       if (amount.isDefined)
-        node.node.properties.update("amount", amount.get)
+        wrapped.node.properties.update("amount", amount.get)
       else
         ();
       if (name.isDefined)
-        node.node.properties.update("name", name.get)
+        wrapped.node.properties.update("name", name.get)
       else
         ();
-      node
+      wrapped
     }
   };
   case class Animal(node: raw.Node) extends Node {
@@ -82,16 +82,16 @@ object ExampleSchemaSubgraph {
     val relationType = raw.RelationType("EATS");
     def wrap(relation: raw.Relation) = Eats(Animal.wrap(relation.startNode), relation, Food.wrap(relation.endNode));
     def create(startNode: Animal, endNode: Food): Eats = {
-      val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
-      relation
+      val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
+      wrapped
     };
     def merge(startNode: Animal, endNode: Food, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Eats = {
-      val relation = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
-      relation
+      val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
+      wrapped
     };
     def matches(startNode: Animal, endNode: Food, matches: Set[PropertyKey] = Set.empty): Eats = {
-      val relation = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
-      relation
+      val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+      wrapped
     }
   };
   case class Eats(startNode: Animal, relation: raw.Relation, endNode: Food) extends Relation[Animal, Food];
@@ -103,25 +103,25 @@ object ExampleSchemaSubgraph {
     def foods: Set[Food] = nodesAs(Food);
     def eats: Set[Eats] = relationsAs(Eats);
     def nodes: Set[Node] = Set.empty.++(animals).++(foods);
-    def relations: (Set[_$5] forSome { 
-      type _$5 <: (Relation[_$13, _$10] forSome { 
+    def relations: (Set[_$4] forSome { 
+      type _$4 <: (Relation[_$13, _$10] forSome { 
         type _$13;
         type _$10
       })
     }) = Set.empty.++(eats);
-    def abstractRelations: (Set[_$14] forSome { 
-      type _$14 <: (AbstractRelation[_$12, _$9] forSome { 
+    def abstractRelations: (Set[_$8] forSome { 
+      type _$8 <: (AbstractRelation[_$12, _$9] forSome { 
         type _$12;
         type _$9
       })
     }) = Set.empty.++(eats);
     def hyperRelations: (Set[_$7] forSome { 
-      type _$7 <: (HyperRelation[_$11, _$8, _$6, _$4, _$3] forSome { 
+      type _$7 <: (HyperRelation[_$11, _$5, _$6, _$3, _$14] forSome { 
         type _$11;
-        type _$8;
+        type _$5;
         type _$6;
-        type _$4;
-        type _$3
+        type _$3;
+        type _$14
       })
     }) = Set.empty
   }

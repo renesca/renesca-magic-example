@@ -39,34 +39,34 @@ object ExampleSchemaMultipleInheritance {
     val labels = Set(raw.Label("ARTICLE"), raw.Label("UUID"), raw.Label("TIMESTAMP"), raw.Label("TAGGABLE"));
     def wrap(node: raw.Node) = new Article(node);
     def create(content: String, timestamp: Long = System.currentTimeMillis, uuid: String = java.util.UUID.randomUUID.toString): Article = {
-      val node = wrap(raw.Node.create(labels));
-      node.node.properties.update("content", content);
-      node.node.properties.update("timestamp", timestamp);
-      node.node.properties.update("uuid", uuid);
-      node
+      val wrapped = wrap(raw.Node.create(labels));
+      wrapped.node.properties.update("content", content);
+      wrapped.node.properties.update("timestamp", timestamp);
+      wrapped.node.properties.update("uuid", uuid);
+      wrapped
     };
     def merge(content: String, timestamp: Long = System.currentTimeMillis, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Article = {
-      val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      node.node.properties.update("content", content);
-      node.node.properties.update("timestamp", timestamp);
-      node.node.properties.update("uuid", uuid);
-      node
+      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      wrapped.node.properties.update("content", content);
+      wrapped.node.properties.update("timestamp", timestamp);
+      wrapped.node.properties.update("uuid", uuid);
+      wrapped
     };
     def matches(content: Option[String] = None, timestamp: Option[Long] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Article = {
-      val node = wrap(raw.Node.matches(labels, matches = matches));
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
       if (content.isDefined)
-        node.node.properties.update("content", content.get)
+        wrapped.node.properties.update("content", content.get)
       else
         ();
       if (timestamp.isDefined)
-        node.node.properties.update("timestamp", timestamp.get)
+        wrapped.node.properties.update("timestamp", timestamp.get)
       else
         ();
       if (uuid.isDefined)
-        node.node.properties.update("uuid", uuid.get)
+        wrapped.node.properties.update("uuid", uuid.get)
       else
         ();
-      node
+      wrapped
     }
   };
   object Tag extends UuidFactory[Tag] {
@@ -74,28 +74,28 @@ object ExampleSchemaMultipleInheritance {
     val labels = Set(raw.Label("TAG"), raw.Label("UUID"));
     def wrap(node: raw.Node) = new Tag(node);
     def create(name: String, uuid: String = java.util.UUID.randomUUID.toString): Tag = {
-      val node = wrap(raw.Node.create(labels));
-      node.node.properties.update("name", name);
-      node.node.properties.update("uuid", uuid);
-      node
+      val wrapped = wrap(raw.Node.create(labels));
+      wrapped.node.properties.update("name", name);
+      wrapped.node.properties.update("uuid", uuid);
+      wrapped
     };
     def merge(name: String, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Tag = {
-      val node = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      node.node.properties.update("name", name);
-      node.node.properties.update("uuid", uuid);
-      node
+      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      wrapped.node.properties.update("name", name);
+      wrapped.node.properties.update("uuid", uuid);
+      wrapped
     };
     def matches(name: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tag = {
-      val node = wrap(raw.Node.matches(labels, matches = matches));
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
       if (name.isDefined)
-        node.node.properties.update("name", name.get)
+        wrapped.node.properties.update("name", name.get)
       else
         ();
       if (uuid.isDefined)
-        node.node.properties.update("uuid", uuid.get)
+        wrapped.node.properties.update("uuid", uuid.get)
       else
         ();
-      node
+      wrapped
     }
   };
   case class Article(node: raw.Node) extends Uuid with Timestamp with Taggable {
@@ -115,16 +115,16 @@ object ExampleSchemaMultipleInheritance {
     val relationType = raw.RelationType("CATEGORIZES");
     def wrap(relation: raw.Relation) = Categorizes(Tag.wrap(relation.startNode), relation, Taggable.wrap(relation.endNode));
     def create(startNode: Tag, endNode: Taggable): Categorizes = {
-      val relation = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
-      relation
+      val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
+      wrapped
     };
     def merge(startNode: Tag, endNode: Taggable, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Categorizes = {
-      val relation = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
-      relation
+      val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
+      wrapped
     };
     def matches(startNode: Tag, endNode: Taggable, matches: Set[PropertyKey] = Set.empty): Categorizes = {
-      val relation = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
-      relation
+      val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+      wrapped
     }
   };
   case class Categorizes(startNode: Tag, relation: raw.Relation, endNode: Taggable) extends Relation[Tag, Taggable];
@@ -156,65 +156,65 @@ object ExampleSchemaMultipleInheritance {
     def taggableAbstractRelations: (Set[_$44] forSome { 
       type _$44 <: AbstractRelation[Taggable, Taggable]
     }) = Set.empty;
-    def uuidHyperRelations: Set[(HyperRelation[Uuid, _$45, _$48, _$46, Uuid] forSome { 
-      type _$45 <: (Relation[Uuid, _$51] forSome { 
-        type _$51
+    def uuidHyperRelations: Set[(HyperRelation[Uuid, _$45, _$49, _$47, Uuid] forSome { 
+      type _$45 <: (Relation[Uuid, _$52] forSome { 
+        type _$52
       });
-      type _$48 <: (HyperRelation[Uuid, _$52, _$50, _$47, Uuid] forSome { 
-        type _$52;
-        type _$50;
-        type _$47
+      type _$49 <: (HyperRelation[Uuid, _$46, _$51, _$48, Uuid] forSome { 
+        type _$46;
+        type _$51;
+        type _$48
       });
-      type _$46 <: (Relation[_$49, Uuid] forSome { 
-        type _$49
+      type _$47 <: (Relation[_$50, Uuid] forSome { 
+        type _$50
       })
     })] = Set.empty;
-    def timestampHyperRelations: Set[(HyperRelation[Timestamp, _$53, _$56, _$54, Timestamp] forSome { 
-      type _$53 <: (Relation[Timestamp, _$59] forSome { 
-        type _$59
+    def timestampHyperRelations: Set[(HyperRelation[Timestamp, _$53, _$57, _$55, Timestamp] forSome { 
+      type _$53 <: (Relation[Timestamp, _$60] forSome { 
+        type _$60
       });
-      type _$56 <: (HyperRelation[Timestamp, _$60, _$58, _$55, Timestamp] forSome { 
-        type _$60;
-        type _$58;
-        type _$55
+      type _$57 <: (HyperRelation[Timestamp, _$54, _$59, _$56, Timestamp] forSome { 
+        type _$54;
+        type _$59;
+        type _$56
       });
-      type _$54 <: (Relation[_$57, Timestamp] forSome { 
-        type _$57
+      type _$55 <: (Relation[_$58, Timestamp] forSome { 
+        type _$58
       })
     })] = Set.empty;
-    def taggableHyperRelations: Set[(HyperRelation[Taggable, _$61, _$64, _$62, Taggable] forSome { 
-      type _$61 <: (Relation[Taggable, _$67] forSome { 
-        type _$67
+    def taggableHyperRelations: Set[(HyperRelation[Taggable, _$61, _$65, _$63, Taggable] forSome { 
+      type _$61 <: (Relation[Taggable, _$68] forSome { 
+        type _$68
       });
-      type _$64 <: (HyperRelation[Taggable, _$68, _$66, _$63, Taggable] forSome { 
-        type _$68;
-        type _$66;
-        type _$63
+      type _$65 <: (HyperRelation[Taggable, _$62, _$67, _$64, Taggable] forSome { 
+        type _$62;
+        type _$67;
+        type _$64
       });
-      type _$62 <: (Relation[_$65, Taggable] forSome { 
-        type _$65
+      type _$63 <: (Relation[_$66, Taggable] forSome { 
+        type _$66
       })
     })] = Set.empty;
     def nodes: Set[Node] = Set.empty.++(articles).++(tags);
-    def relations: (Set[_$71] forSome { 
-      type _$71 <: (Relation[_$79, _$76] forSome { 
+    def relations: (Set[_$70] forSome { 
+      type _$70 <: (Relation[_$79, _$76] forSome { 
         type _$79;
         type _$76
       })
     }) = Set.empty.++(categorizes);
-    def abstractRelations: (Set[_$80] forSome { 
-      type _$80 <: (AbstractRelation[_$78, _$75] forSome { 
+    def abstractRelations: (Set[_$74] forSome { 
+      type _$74 <: (AbstractRelation[_$78, _$75] forSome { 
         type _$78;
         type _$75
       })
     }) = Set.empty.++(categorizes);
     def hyperRelations: (Set[_$73] forSome { 
-      type _$73 <: (HyperRelation[_$77, _$74, _$72, _$70, _$69] forSome { 
+      type _$73 <: (HyperRelation[_$77, _$71, _$72, _$69, _$80] forSome { 
         type _$77;
-        type _$74;
+        type _$71;
         type _$72;
-        type _$70;
-        type _$69
+        type _$69;
+        type _$80
       })
     }) = Set.empty
   }
