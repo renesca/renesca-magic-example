@@ -68,15 +68,15 @@ object ExampleSchemaWrapping {
     override val label = raw.Label("ANIMAL");
     override val labels = Set(raw.Label("ANIMAL"));
     def eats: Set[Food] = successorsAs(Food, Eats);
-    def name: String = node.properties("name").asInstanceOf[StringPropertyValue]
+    def name: String = item.properties("name").asInstanceOf[StringPropertyValue]
   };
   case class Food(node: raw.Node) extends Node {
     override val label = raw.Label("FOOD");
     override val labels = Set(raw.Label("FOOD"));
     def rev_eats: Set[Animal] = predecessorsAs(Animal, Eats);
-    def name: String = node.properties("name").asInstanceOf[StringPropertyValue];
-    def amount: Long = node.properties("amount").asInstanceOf[LongPropertyValue];
-    def `amount_=`(newValue: Long): scala.Unit = node.properties.update("amount", newValue)
+    def name: String = item.properties("name").asInstanceOf[StringPropertyValue];
+    def amount: Long = item.properties("amount").asInstanceOf[LongPropertyValue];
+    def `amount_=`(newValue: Long): scala.Unit = item.properties.update("amount", newValue)
   };
   object Eats extends RelationFactory[Animal, Eats, Food] with AbstractRelationFactory[Animal, Eats, Food] {
     val relationType = raw.RelationType("EATS");

@@ -68,15 +68,15 @@ object ExampleSchemaSubgraph {
     override val label = raw.Label("ANIMAL");
     override val labels = Set(raw.Label("ANIMAL"));
     def eats: Set[Food] = successorsAs(Food, Eats);
-    def name: String = node.properties("name").asInstanceOf[StringPropertyValue]
+    def name: String = item.properties("name").asInstanceOf[StringPropertyValue]
   };
   case class Food(node: raw.Node) extends Node {
     override val label = raw.Label("FOOD");
     override val labels = Set(raw.Label("FOOD"));
     def rev_eats: Set[Animal] = predecessorsAs(Animal, Eats);
-    def name: String = node.properties("name").asInstanceOf[StringPropertyValue];
-    def amount: Long = node.properties("amount").asInstanceOf[LongPropertyValue];
-    def `amount_=`(newValue: Long): scala.Unit = node.properties.update("amount", newValue)
+    def name: String = item.properties("name").asInstanceOf[StringPropertyValue];
+    def amount: Long = item.properties("amount").asInstanceOf[LongPropertyValue];
+    def `amount_=`(newValue: Long): scala.Unit = item.properties.update("amount", newValue)
   };
   object Eats extends RelationFactory[Animal, Eats, Food] with AbstractRelationFactory[Animal, Eats, Food] {
     val relationType = raw.RelationType("EATS");
@@ -104,22 +104,22 @@ object ExampleSchemaSubgraph {
     def eats: Set[Eats] = relationsAs(Eats);
     def nodes: Set[Node] = Set.empty.++(animals).++(foods);
     def relations: (Set[_$4] forSome { 
-      type _$4 <: (Relation[_$13, _$10] forSome { 
-        type _$13;
-        type _$10
+      type _$4 <: (Relation[_$10, _$13] forSome { 
+        type _$10;
+        type _$13
       })
     }) = Set.empty.++(eats);
-    def abstractRelations: (Set[_$8] forSome { 
-      type _$8 <: (AbstractRelation[_$12, _$9] forSome { 
-        type _$12;
-        type _$9
+    def abstractRelations: (Set[_$12] forSome { 
+      type _$12 <: (AbstractRelation[_$9, _$7] forSome { 
+        type _$9;
+        type _$7
       })
     }) = Set.empty.++(eats);
-    def hyperRelations: (Set[_$7] forSome { 
-      type _$7 <: (HyperRelation[_$11, _$5, _$6, _$3, _$14] forSome { 
-        type _$11;
-        type _$5;
+    def hyperRelations: (Set[_$11] forSome { 
+      type _$11 <: (HyperRelation[_$8, _$6, _$5, _$3, _$14] forSome { 
+        type _$8;
         type _$6;
+        type _$5;
         type _$3;
         type _$14
       })

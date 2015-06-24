@@ -30,11 +30,13 @@ object Main extends App {
     // Wrapping low level entities
     @macros.GraphSchema
     object ExampleSchemaWrapping {
+      // Nodes get their class name as uppercase label
       @Node class Animal {val name: String }
       @Node class Food {
-        val name: String;
+        val name: String
         var amount: Long
       }
+      // Relations get their class name as uppercase relationType
       @Relation class Eats(startNode: Animal, endNode: Food)
     }
 
@@ -78,13 +80,17 @@ object Main extends App {
     // Node and Relation traits
     @macros.GraphSchema
     object ExampleSchemaTraits {
+      // Inheriting Nodes receive their name as additional label
       @Node trait Animal {val name: String }
 
       // Node with labels FISH and ANIMAL
       @Node class Fish extends Animal
       @Node class Dog extends Animal
 
-      @Relation trait Consumes
+      @Relation trait Consumes { val funny:Boolean }
+
+      // Relations can connect Node traits.
+      // So we can connect any node extending the trait
       @Relation class Eats(startNode: Animal, endNode: Animal) extends Consumes
       @Relation class Drinks(startNode: Animal, endNode: Animal) extends Consumes
 
@@ -100,27 +106,28 @@ object Main extends App {
 
     zoo.add(bello)
     zoo.add(wanda)
-
-    zoo.add(Eats.create(bello, wanda))
-    zoo.add(Drinks.create(wanda, bello))
-
     zoo.animals // Set(bello, wanda)
-    //TODO: there are no accessors for relation traits in graph ?!
-    //zoo.consumes
+
+    zoo.add(Eats.create(bello, wanda, funny = false))
+    zoo.add(Drinks.create(wanda, bello, funny = true))
   }
 
   {
     // Multiple inheritance, default property values
     @macros.GraphSchema
     object ExampleSchemaMultipleInheritance {
+      // Assignments are default values for properties
+      // They can also be arbitrary statements
       @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
       @Node trait Timestamp { val timestamp: Long = System.currentTimeMillis }
       @Node trait Taggable
 
-      @Node class Article extends Uuid with Timestamp with Taggable {val content:String}
-      @Node class Tag extends Uuid {val name:String}
+      @Node class Article extends Uuid with Timestamp with Taggable {
+        val content:String
+      }
+      @Node class Tag extends Uuid { val name:String }
       @Relation class Categorizes(startNode:Tag, endNode:Taggable)
-      
+
       @Graph trait Blog {Nodes(Article, Tag)}
     }
 
@@ -132,21 +139,47 @@ object Main extends App {
 
     val blog = Blog(db.queryGraph("MATCH (t:TAG) return t"))
 
-    // automatically sets uuid and timestamp
-    val article = Article.create(content = "Some useful and important content") 
-
+    // automatically set uuid and timestamp
+    val article = Article.create(content = "Some useful and important content")
     blog.add(article)
 
     // set all tags on the article
-    blog.tags.foreach{ tag => 
+    blog.tags.foreach{ tag =>
       Categorizes.create(tag, article)
     }
 
-    blog.taggables // contains Set(article)
+    blog.taggables // Set(article)
 
     db.persistChanges(blog)
   }
 
+  {
+    // Hyperrelations
+    @macros.GraphSchema
+    object ExampleSchemaHyperRelations {
+      @Node trait Uuid { val uuid: String = java.util.UUID.randomUUID.toString }
+      @Node trait Taggable
+      @Node class Tag extends Uuid {val name:String}
+      @Node class User extends Uuid {val name:String}
+      @Node class Article extends Uuid with Taggable {val content:String}
+
+      // A HyperRelation is a node representing a relation:
+      // (n)-[]->(hyperRelation)-[]->(m)
+      // It behaves like node and relation at the same time
+      // and therefore can extend node and relation traits.
+      @HyperRelation class Tags(startNode: Tag, endNode: Taggable) extends Uuid
+      // Because they are nodes, we can connect a HyperRelation with another Node
+      @Relation class Supports(startNode: User, endNode: Tags)
+    }
+
+    import ExampleSchemaHyperRelations._
+    val user = User.create(name="pumuckl")
+    val helpful = Tag.create(name="helpful")
+    val article = Article.create(content="Dog eats Snake")
+
+    val tags = Tags.create(helpful, article) // HyperRelation
+    val supports = Supports.create(user, tags) // Relation from user to HyperRelation
+  }
 
   // clear database
   db.query("MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r")
