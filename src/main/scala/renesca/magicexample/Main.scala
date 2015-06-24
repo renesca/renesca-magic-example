@@ -39,12 +39,12 @@ object Main extends App {
     }
 
     import ExampleSchemaWrapping._
-    
-    val animal = Animal.create("snake")
-    val food = Food.create(name = "cake", amount = 1000)
-    val eats = Eats.create(animal, food)
 
-    food.amount -= 100
+    val snake = Animal.create("snake")
+    val cake = Food.create(name = "cake", amount = 1000)
+    val eats = Eats.create(snake, cake)
+
+    cake.amount -= 100
   }
 
 
