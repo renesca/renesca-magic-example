@@ -66,11 +66,47 @@ object Main extends App {
 
     val zoo = Zoo(db.queryGraph("MATCH (a:ANIMAL)-[e:EATS]->(f:FOOD) RETURN a,e,f"))
     val elefant = Animal.create("elefant")
-    zoo.add(elefant)
-    println(zoo.animals)
+    val pizza = Food.create(name = "pizza", amount = 2)
+    zoo.add(Eats.create(elefant, pizza))
+    println(zoo.animals) // elefant
+    println(zoo.relations) // elefant eats pizza (Relations between Nodes are induced)
     db.persistChanges(zoo)
   }
 
+  {
+    // Node and Relation traits
+    @macros.GraphSchema
+    object ExampleSchemaTraits {
+      @Node trait Animal {val name: String }
+
+      // Node with labels FISH and ANIMAL
+      @Node class Fish extends Animal
+      @Node class Dog extends Animal
+
+      @Relation trait Consumes
+      @Relation class Eats(startNode: Animal, endNode: Animal) extends Consumes
+      @Relation class Drinks(startNode: Animal, endNode: Animal) extends Consumes
+
+      // Zoo contains all Animals (Animal expands to all subNodes)
+      @Graph trait Zoo {Nodes(Animal) }
+    }
+
+    import ExampleSchemaTraits._
+
+    val zoo = Zoo.empty
+    val bello = Dog.create("bello")
+    val wanda = Fish.create("wanda")
+
+    zoo.add(bello)
+    zoo.add(wanda)
+
+    zoo.add(Eats.create(bello, wanda))
+    zoo.add(Drinks.create(wanda, bello))
+
+    println(zoo.animals) // bello and wanda
+    //TODO: there are no accessors for relation traits in graph ?!
+    //println(zoo.consumes)
+  }
 
 
   // clear database
