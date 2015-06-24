@@ -13,12 +13,7 @@ To run this project type:
 $ sbt run
 ```
 
-
-This will print
-
-```
-...
-```
+There is no output. But at compile time the following code will be generated: [magic](https://github.com/renesca/renesca-magic-example/tree/master/magic)
 
 ## License
 Licensed under the [Apache License, Version 2.0][Apache]
