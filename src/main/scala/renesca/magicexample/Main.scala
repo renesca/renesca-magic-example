@@ -4,6 +4,7 @@ package renesca.magicexample
 // import renesca.parameter.implicits._
 
 import renesca.schema.macros
+import renesca.parameter.implicits._
 import renesca.{DbService, RestService, Transaction}
 import spray.http.BasicHttpCredentials
 
@@ -101,8 +102,10 @@ object Main extends App {
     import ExampleSchemaTraits._
 
     val zoo = Zoo.empty
-    val bello = Dog.create("bello")
-    val wanda = Fish.create("wanda")
+    // merge dog and fish on the name property
+    // (creates the animal if it does not exist, otherwise the existing animal is matched)
+    val bello = Dog.merge(name = "bello", merge = Set("name"))
+    val wanda = Fish.merge(name = "wanda", merge = Set("name"))
 
     zoo.add(bello)
     zoo.add(wanda)
@@ -132,12 +135,17 @@ object Main extends App {
     }
 
     import ExampleSchemaMultipleInheritance._
+
     val initGraph = Blog.empty
-    initGraph.add(Tag.create(name="useful"))
-    initGraph.add(Tag.create(name="important"))
+    initGraph.add(Tag.create(name = "useful"))
+    initGraph.add(Tag.create(name = "important"))
     db.persistChanges(initGraph)
 
-    val blog = Blog(db.queryGraph("MATCH (t:TAG) return t"))
+    val blog = Blog.empty
+
+    // match the previously created tags
+    blog.add(Tag.matches(name = Some("useful"), matches = Set("name")))
+    blog.add(Tag.matches(name = Some("important"), matches = Set("name")))
 
     // automatically set uuid and timestamp
     val article = Article.create(content = "Some useful and important content")
@@ -145,10 +153,11 @@ object Main extends App {
 
     // set all tags on the article
     blog.tags.foreach{ tag =>
-      Categorizes.create(tag, article)
+      blog.add(Categorizes.create(tag, article))
     }
 
     blog.taggables // Set(article)
+    article.rev_categorizes // blog.tags
 
     db.persistChanges(blog)
   }

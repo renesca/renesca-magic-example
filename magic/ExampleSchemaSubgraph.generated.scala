@@ -103,25 +103,25 @@ object ExampleSchemaSubgraph {
     def foods: Set[Food] = nodesAs(Food);
     def eats: Set[Eats] = relationsAs(Eats);
     def nodes: Set[Node] = Set.empty.++(animals).++(foods);
-    def relations: (Set[_$4] forSome { 
-      type _$4 <: (Relation[_$10, _$13] forSome { 
-        type _$10;
-        type _$13
+    def relations: (Set[_$14] forSome { 
+      type _$14 <: (Relation[_$7, _$11] forSome { 
+        type _$7;
+        type _$11
       })
     }) = Set.empty.++(eats);
-    def abstractRelations: (Set[_$12] forSome { 
-      type _$12 <: (AbstractRelation[_$9, _$7] forSome { 
-        type _$9;
-        type _$7
-      })
-    }) = Set.empty.++(eats);
-    def hyperRelations: (Set[_$11] forSome { 
-      type _$11 <: (HyperRelation[_$8, _$6, _$5, _$3, _$14] forSome { 
-        type _$8;
+    def abstractRelations: (Set[_$9] forSome { 
+      type _$9 <: (AbstractRelation[_$6, _$10] forSome { 
         type _$6;
+        type _$10
+      })
+    }) = Set.empty.++(eats);
+    def hyperRelations: (Set[_$8] forSome { 
+      type _$8 <: (HyperRelation[_$5, _$4, _$3, _$13, _$12] forSome { 
         type _$5;
+        type _$4;
         type _$3;
-        type _$14
+        type _$13;
+        type _$12
       })
     }) = Set.empty
   }

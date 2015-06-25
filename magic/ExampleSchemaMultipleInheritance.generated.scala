@@ -156,65 +156,65 @@ object ExampleSchemaMultipleInheritance {
     def taggableAbstractRelations: (Set[_$44] forSome { 
       type _$44 <: AbstractRelation[Taggable, Taggable]
     }) = Set.empty;
-    def uuidHyperRelations: Set[(HyperRelation[Uuid, _$45, _$52, _$51, Uuid] forSome { 
-      type _$45 <: (Relation[Uuid, _$49] forSome { 
-        type _$49
-      });
-      type _$52 <: (HyperRelation[Uuid, _$50, _$48, _$46, Uuid] forSome { 
-        type _$50;
-        type _$48;
-        type _$46
-      });
-      type _$51 <: (Relation[_$47, Uuid] forSome { 
+    def uuidHyperRelations: Set[(HyperRelation[Uuid, _$52, _$51, _$49, Uuid] forSome { 
+      type _$52 <: (Relation[Uuid, _$47] forSome { 
         type _$47
+      });
+      type _$51 <: (HyperRelation[Uuid, _$48, _$46, _$50, Uuid] forSome { 
+        type _$48;
+        type _$46;
+        type _$50
+      });
+      type _$49 <: (Relation[_$45, Uuid] forSome { 
+        type _$45
       })
     })] = Set.empty;
-    def timestampHyperRelations: Set[(HyperRelation[Timestamp, _$53, _$60, _$59, Timestamp] forSome { 
-      type _$53 <: (Relation[Timestamp, _$57] forSome { 
-        type _$57
-      });
-      type _$60 <: (HyperRelation[Timestamp, _$58, _$56, _$54, Timestamp] forSome { 
-        type _$58;
-        type _$56;
-        type _$54
-      });
-      type _$59 <: (Relation[_$55, Timestamp] forSome { 
+    def timestampHyperRelations: Set[(HyperRelation[Timestamp, _$60, _$59, _$57, Timestamp] forSome { 
+      type _$60 <: (Relation[Timestamp, _$55] forSome { 
         type _$55
+      });
+      type _$59 <: (HyperRelation[Timestamp, _$56, _$54, _$58, Timestamp] forSome { 
+        type _$56;
+        type _$54;
+        type _$58
+      });
+      type _$57 <: (Relation[_$53, Timestamp] forSome { 
+        type _$53
       })
     })] = Set.empty;
-    def taggableHyperRelations: Set[(HyperRelation[Taggable, _$61, _$68, _$67, Taggable] forSome { 
-      type _$61 <: (Relation[Taggable, _$65] forSome { 
-        type _$65
-      });
-      type _$68 <: (HyperRelation[Taggable, _$66, _$64, _$62, Taggable] forSome { 
-        type _$66;
-        type _$64;
-        type _$62
-      });
-      type _$67 <: (Relation[_$63, Taggable] forSome { 
+    def taggableHyperRelations: Set[(HyperRelation[Taggable, _$68, _$67, _$65, Taggable] forSome { 
+      type _$68 <: (Relation[Taggable, _$63] forSome { 
         type _$63
+      });
+      type _$67 <: (HyperRelation[Taggable, _$64, _$62, _$66, Taggable] forSome { 
+        type _$64;
+        type _$62;
+        type _$66
+      });
+      type _$65 <: (Relation[_$61, Taggable] forSome { 
+        type _$61
       })
     })] = Set.empty;
     def nodes: Set[Node] = Set.empty.++(articles).++(tags);
-    def relations: (Set[_$70] forSome { 
-      type _$70 <: (Relation[_$76, _$79] forSome { 
-        type _$76;
-        type _$79
+    def relations: (Set[_$80] forSome { 
+      type _$80 <: (Relation[_$73, _$77] forSome { 
+        type _$73;
+        type _$77
       })
     }) = Set.empty.++(categorizes);
-    def abstractRelations: (Set[_$78] forSome { 
-      type _$78 <: (AbstractRelation[_$75, _$73] forSome { 
-        type _$75;
-        type _$73
-      })
-    }) = Set.empty.++(categorizes);
-    def hyperRelations: (Set[_$77] forSome { 
-      type _$77 <: (HyperRelation[_$74, _$72, _$71, _$69, _$80] forSome { 
-        type _$74;
+    def abstractRelations: (Set[_$75] forSome { 
+      type _$75 <: (AbstractRelation[_$72, _$76] forSome { 
         type _$72;
+        type _$76
+      })
+    }) = Set.empty.++(categorizes);
+    def hyperRelations: (Set[_$74] forSome { 
+      type _$74 <: (HyperRelation[_$71, _$70, _$69, _$79, _$78] forSome { 
         type _$71;
+        type _$70;
         type _$69;
-        type _$80
+        type _$79;
+        type _$78
       })
     }) = Set.empty
   }
