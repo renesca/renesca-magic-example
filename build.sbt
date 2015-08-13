@@ -1,6 +1,6 @@
 name := "renesca-example"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 libraryDependencies ++= Seq(
   "com.github.renesca" %% "renesca" % "0.3.0",
