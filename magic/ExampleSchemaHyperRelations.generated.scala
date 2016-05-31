@@ -1,57 +1,92 @@
 object ExampleSchemaHyperRelations {
   import renesca.{graph=>raw};
+  import renesca.QueryHandler;
   import renesca.schema._;
   import renesca.parameter._;
   import renesca.parameter.implicits._;
-  val nodeLabelToFactory = Map[raw.Label, (NodeFactory[_$81] forSome { 
-    type _$81 <: Node
-  })](scala.Tuple2("TAG", Tag), scala.Tuple2("USER", User), scala.Tuple2("ARTICLE", Article), scala.Tuple2("TAGS", Tags));
-  trait RootNodeTraitFactory[NODE <: Node] {
-    val nodeLabels: Set[raw.Label] = Set("TAG", "USER", "ARTICLE", "TAGS");
-    def nodeLabel(node: raw.Node): raw.Label = nodeLabels.intersect(node.labels).head;
-    def factory(node: raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
+  val nodeLabelToFactory = Map[Set[raw.Label], NodeFactory[Node]](scala.Tuple2(Uuid.labels, UuidMatches), scala.Tuple2(Taggable.labels, TaggableMatches), scala.Tuple2(Tag.labels, Tag), scala.Tuple2(User.labels, User), scala.Tuple2(Article.labels, Article), scala.Tuple2(Tagged.labels, Tagged));
+  trait RootNodeTraitFactory[+NODE <: Node] {
+    def factory(node: raw.Node) = nodeLabelToFactory(node.labels.toSet).asInstanceOf[NodeFactory[NODE]];
     def wrap(node: raw.Node) = factory(node).wrap(node)
   };
-  trait UuidFactory[NODE <: Uuid] extends NodeFactory[NODE];
-  object Uuid extends RootNodeTraitFactory[Uuid] {
-    val label = raw.Label("UUID");
-    val labels = Set(raw.Label("UUID"))
+  def setupDbConstraints(queryHandler: QueryHandler) = ();
+  trait UuidMatchesFactory[+NODE <: Uuid] extends NodeFactory[NODE] {
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
   };
-  trait TaggableFactory[NODE <: Taggable] extends NodeFactory[NODE];
-  object Taggable extends RootNodeTraitFactory[Taggable] {
-    val label = raw.Label("TAGGABLE");
-    val labels = Set(raw.Label("TAGGABLE"))
+  trait UuidFactory[+NODE <: Uuid] extends NodeFactory[NODE] with UuidMatchesFactory[NODE];
+  object Uuid extends RootNodeTraitFactory[Uuid] with UuidMatchesFactory[Uuid] {
+    val label = UuidMatches.label;
+    val labels = UuidMatches.labels;
+    def matches(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = UuidMatches.matches(uuid, matches);
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = this.matches(uuid, matches)
+  };
+  trait TaggableMatchesFactory[+NODE <: Taggable] extends NodeFactory[NODE] {
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): NODE
+  };
+  trait TaggableFactory[+NODE <: Taggable] extends NodeFactory[NODE] with TaggableMatchesFactory[NODE];
+  object Taggable extends RootNodeTraitFactory[Taggable] with TaggableMatchesFactory[Taggable] {
+    val label = TaggableMatches.label;
+    val labels = TaggableMatches.labels;
+    def matches(matches: Set[PropertyKey] = Set.empty): TaggableMatches = TaggableMatches.matches(matches);
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): TaggableMatches = this.matches(matches)
   };
   trait Uuid extends Node {
-    def uuid: String = item.properties("uuid").asInstanceOf[StringPropertyValue]
+    def uuid: String = rawItem.properties("uuid").asInstanceOf[StringPropertyValue]
   };
-  trait Taggable extends Node;
+  trait Taggable extends Node {
+    def rev_taggeds: Seq[Tag]
+  };
+  object UuidMatches extends UuidMatchesFactory[UuidMatches] {
+    val label = raw.Label("UUID");
+    val labels = Set(raw.Label("UUID"));
+    def wrap(node: raw.Node) = new UuidMatches(node);
+    def matches(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (uuid.isDefined)
+        wrapped.rawItem.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = this.matches(uuid, matches)
+  };
+  object TaggableMatches extends TaggableMatchesFactory[TaggableMatches] {
+    val label = raw.Label("TAGGABLE");
+    val labels = Set(raw.Label("TAGGABLE"));
+    def wrap(node: raw.Node) = new TaggableMatches(node);
+    def matches(matches: Set[PropertyKey] = Set.empty): TaggableMatches = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      wrapped
+    };
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): TaggableMatches = this.matches(matches)
+  };
   object Tag extends UuidFactory[Tag] {
     val label = raw.Label("TAG");
     val labels = Set(raw.Label("TAG"), raw.Label("UUID"));
     def wrap(node: raw.Node) = new Tag(node);
+    def matches(name: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tag = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (name.isDefined)
+        wrapped.rawItem.properties.update("name", name.get)
+      else
+        ();
+      if (uuid.isDefined)
+        wrapped.rawItem.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tag = this.matches(None, uuid, matches);
     def create(name: String, uuid: String = java.util.UUID.randomUUID.toString): Tag = {
       val wrapped = wrap(raw.Node.create(labels));
-      wrapped.node.properties.update("name", name);
-      wrapped.node.properties.update("uuid", uuid);
+      wrapped.rawItem.properties.update("name", name);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     };
     def merge(name: String, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Tag = {
       val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      wrapped.node.properties.update("name", name);
-      wrapped.node.properties.update("uuid", uuid);
-      wrapped
-    };
-    def matches(name: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tag = {
-      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
-      if (name.isDefined)
-        wrapped.node.properties.update("name", name.get)
-      else
-        ();
-      if (uuid.isDefined)
-        wrapped.node.properties.update("uuid", uuid.get)
-      else
-        ();
+      wrapped.rawItem.properties.update("name", name);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     }
   };
@@ -59,28 +94,29 @@ object ExampleSchemaHyperRelations {
     val label = raw.Label("USER");
     val labels = Set(raw.Label("USER"), raw.Label("UUID"));
     def wrap(node: raw.Node) = new User(node);
+    def matches(name: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): User = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (name.isDefined)
+        wrapped.rawItem.properties.update("name", name.get)
+      else
+        ();
+      if (uuid.isDefined)
+        wrapped.rawItem.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): User = this.matches(None, uuid, matches);
     def create(name: String, uuid: String = java.util.UUID.randomUUID.toString): User = {
       val wrapped = wrap(raw.Node.create(labels));
-      wrapped.node.properties.update("name", name);
-      wrapped.node.properties.update("uuid", uuid);
+      wrapped.rawItem.properties.update("name", name);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     };
     def merge(name: String, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): User = {
       val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      wrapped.node.properties.update("name", name);
-      wrapped.node.properties.update("uuid", uuid);
-      wrapped
-    };
-    def matches(name: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): User = {
-      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
-      if (name.isDefined)
-        wrapped.node.properties.update("name", name.get)
-      else
-        ();
-      if (uuid.isDefined)
-        wrapped.node.properties.update("uuid", uuid.get)
-      else
-        ();
+      wrapped.rawItem.properties.update("name", name);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     }
   };
@@ -88,108 +124,213 @@ object ExampleSchemaHyperRelations {
     val label = raw.Label("ARTICLE");
     val labels = Set(raw.Label("ARTICLE"), raw.Label("UUID"), raw.Label("TAGGABLE"));
     def wrap(node: raw.Node) = new Article(node);
+    def matches(content: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Article = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (content.isDefined)
+        wrapped.rawItem.properties.update("content", content.get)
+      else
+        ();
+      if (uuid.isDefined)
+        wrapped.rawItem.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Article = this.matches(None, uuid, matches);
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): Article = this.matches(None, None, matches);
     def create(content: String, uuid: String = java.util.UUID.randomUUID.toString): Article = {
       val wrapped = wrap(raw.Node.create(labels));
-      wrapped.node.properties.update("content", content);
-      wrapped.node.properties.update("uuid", uuid);
+      wrapped.rawItem.properties.update("content", content);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     };
     def merge(content: String, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Article = {
       val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      wrapped.node.properties.update("content", content);
-      wrapped.node.properties.update("uuid", uuid);
-      wrapped
-    };
-    def matches(content: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Article = {
-      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
-      if (content.isDefined)
-        wrapped.node.properties.update("content", content.get)
-      else
-        ();
-      if (uuid.isDefined)
-        wrapped.node.properties.update("uuid", uuid.get)
-      else
-        ();
+      wrapped.rawItem.properties.update("content", content);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     }
   };
-  case class Tag(node: raw.Node) extends Uuid {
+  case class UuidMatches(rawItem: raw.Node) extends Uuid {
+    override val label = raw.Label("UUID");
+    override val labels = Set(raw.Label("UUID"))
+  };
+  case class TaggableMatches(rawItem: raw.Node) extends Taggable {
+    override val label = raw.Label("TAGGABLE");
+    override val labels = Set(raw.Label("TAGGABLE"));
+    def rev_taggeds: Seq[Tag] = predecessorsAs(Tag, Tagged)
+  };
+  case class Tag(rawItem: raw.Node) extends Uuid {
     override val label = raw.Label("TAG");
     override val labels = Set(raw.Label("TAG"), raw.Label("UUID"));
-    def tagsArticles: Set[Article] = successorsAs(Article, Tags);
-    def tags: Set[Taggable] = Set.empty.++(tagsArticles);
-    def name: String = item.properties("name").asInstanceOf[StringPropertyValue]
+    def taggedArticles: Seq[Article] = successorsAs(Article, Tagged);
+    def taggeds: Seq[Taggable] = Seq.empty.++(taggedArticles);
+    def name: String = rawItem.properties("name").asInstanceOf[StringPropertyValue]
   };
-  case class User(node: raw.Node) extends Uuid {
+  case class User(rawItem: raw.Node) extends Uuid {
     override val label = raw.Label("USER");
     override val labels = Set(raw.Label("USER"), raw.Label("UUID"));
-    def supports: Set[Tags] = successorsAs(Tags, Supports);
-    def name: String = item.properties("name").asInstanceOf[StringPropertyValue]
+    def supports: Seq[Tagged] = successorsAs(Tagged, Supports);
+    def name: String = rawItem.properties("name").asInstanceOf[StringPropertyValue]
   };
-  case class Article(node: raw.Node) extends Uuid with Taggable {
+  case class Article(rawItem: raw.Node) extends Uuid with Taggable {
     override val label = raw.Label("ARTICLE");
     override val labels = Set(raw.Label("ARTICLE"), raw.Label("UUID"), raw.Label("TAGGABLE"));
-    def rev_tags: Set[Tag] = predecessorsAs(Tag, Tags);
-    def content: String = item.properties("content").asInstanceOf[StringPropertyValue]
+    def rev_taggeds: Seq[Tag] = predecessorsAs(Tag, Tagged);
+    def content: String = rawItem.properties("content").asInstanceOf[StringPropertyValue]
   };
-  object Supports extends RelationFactory[User, Supports, Tags] with AbstractRelationFactory[User, Supports, Tags] {
+  object Supports extends RelationFactory[User, Supports, Tagged] with AbstractRelationFactory[User, Supports, Tagged] {
     val relationType = raw.RelationType("SUPPORTS");
-    def wrap(relation: raw.Relation) = Supports(User.wrap(relation.startNode), relation, Tags.wrap(relation.endNode));
-    def create(startNode: User, endNode: Tags): Supports = {
-      val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
+    def wrap(relation: raw.Relation) = Supports(User.wrap(relation.startNode), relation, Tagged.wrap(relation.endNode));
+    def create(startNode: User, endNode: Tagged): Supports = {
+      val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
       wrapped
     };
-    def merge(startNode: User, endNode: Tags, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Supports = {
-      val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
+    def merge(startNode: User, endNode: Tagged, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Supports = {
+      val wrapped = wrap(raw.Relation.merge(startNode.rawItem, relationType, endNode.rawItem, merge = merge, onMatch = onMatch));
       wrapped
     };
-    def matches(startNode: User, endNode: Tags, matches: Set[PropertyKey] = Set.empty): Supports = {
-      val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+    def matches(startNode: User, endNode: Tagged, matches: Set[PropertyKey] = Set.empty): Supports = {
+      val wrapped = wrap(raw.Relation.matches(startNode.rawItem, relationType, endNode.rawItem, matches = matches));
       wrapped
     }
   };
-  case class Supports(startNode: User, relation: raw.Relation, endNode: Tags) extends Relation[User, Tags];
-  object Tags extends HyperRelationFactory[Tag, TagToTags, Tags, TagsToTaggable, Taggable] with UuidFactory[Tags] {
-    override val label = raw.Label("TAGS");
-    override val labels = Set(raw.Label("TAGS"));
-    override val startRelationType = raw.RelationType("TAGTOTAGS");
-    override val endRelationType = raw.RelationType("TAGSTOTAGGABLE");
-    override def wrap(node: raw.Node) = new Tags(node);
+  case class Supports(startNode: User, rawItem: raw.Relation, endNode: Tagged) extends Relation[User, Tagged];
+  object Tagged extends HyperRelationFactory[Tag, TaggedStart, Tagged, TaggedEnd, Taggable] with UuidFactory[Tagged] {
+    override val label = raw.Label("TAGGED");
+    override val labels = Set(raw.Label("TAGGED"), raw.Label("UUID"));
+    override val startRelationType = raw.RelationType("TAGGEDSTART");
+    override val endRelationType = raw.RelationType("TAGGEDEND");
+    override def wrap(node: raw.Node) = new Tagged(node);
     override def wrap(startRelation: raw.Relation, middleNode: raw.Node, endRelation: raw.Relation) = {
       val hyperRelation = wrap(middleNode);
-      hyperRelation._startRelation = TagToTags(Tag.wrap(startRelation.startNode), startRelation, hyperRelation);
-      hyperRelation._endRelation = TagsToTaggable(hyperRelation, endRelation, Taggable.wrap(endRelation.endNode));
+      hyperRelation._startRelation = TaggedStart(Tag.wrap(startRelation.startNode), startRelation, hyperRelation);
+      hyperRelation._endRelation = TaggedEnd(hyperRelation, endRelation, Taggable.wrap(endRelation.endNode));
       hyperRelation
     };
-    def create(startNode: Tag, endNode: Taggable, uuid: String = java.util.UUID.randomUUID.toString): Tags = {
+    def create(startNode: Tag, endNode: Taggable, uuid: String = java.util.UUID.randomUUID.toString): Tagged = {
       val middleNode = raw.Node.create(labels);
       middleNode.properties.update("uuid", uuid);
-      val wrapped = wrap(raw.Relation.create(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.node));
-      wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption;
-      wrapped
+      wrap(raw.Relation.create(startNode.rawItem, startRelationType, middleNode), middleNode, raw.Relation.create(middleNode, endRelationType, endNode.rawItem))
     };
-    def merge(startNode: Tag, endNode: Taggable, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Tags = {
+    def merge(startNode: Tag, endNode: Taggable, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Tagged = {
       val middleNode = raw.Node.merge(labels, merge = merge, onMatch = onMatch);
       middleNode.properties.update("uuid", uuid);
-      val wrapped = wrap(raw.Relation.merge(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.merge(middleNode, endRelationType, endNode.node));
-      wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption;
-      wrapped
+      wrap(raw.Relation.merge(startNode.rawItem, startRelationType, middleNode), middleNode, raw.Relation.merge(middleNode, endRelationType, endNode.rawItem))
     };
-    def matches(startNode: Tag, endNode: Taggable, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tags = {
+    def matches(startNode: Tag, endNode: Taggable, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tagged = {
       val middleNode = raw.Node.matches(labels, matches = matches);
       if (uuid.isDefined)
         middleNode.properties.update("uuid", uuid.get)
       else
         ();
-      val wrapped = wrap(raw.Relation.matches(startNode.node, startRelationType, middleNode), middleNode, raw.Relation.matches(middleNode, endRelationType, endNode.node));
-      wrapped.path = raw.Path(wrapped.startRelation.relation, wrapped.endRelation.relation).right.toOption;
-      wrapped
+      wrap(raw.Relation.matches(startNode.rawItem, startRelationType, middleNode), middleNode, raw.Relation.matches(middleNode, endRelationType, endNode.rawItem))
+    };
+    def matchesNode(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tagged = {
+      val middleNode = raw.Node.matches(labels, matches = matches);
+      if (uuid.isDefined)
+        middleNode.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrap(middleNode)
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tagged = this.matchesNode(uuid, matches)
+  };
+  object TaggedEnd extends RelationFactory[Tagged, TaggedEnd, Taggable] {
+    val relationType = raw.RelationType("TAGGEDEND");
+    def wrap(relation: raw.Relation) = TaggedEnd(Tagged.wrap(relation.startNode), relation, Taggable.wrap(relation.endNode))
+  };
+  object TaggedStart extends RelationFactory[Tag, TaggedStart, Tagged] {
+    val relationType = raw.RelationType("TAGGEDSTART");
+    def wrap(relation: raw.Relation) = TaggedStart(Tag.wrap(relation.startNode), relation, Tagged.wrap(relation.endNode))
+  };
+  case class Tagged(rawItem: raw.Node) extends HyperRelation[Tag, TaggedStart, Tagged, TaggedEnd, Taggable] with Uuid {
+    override val label = raw.Label("TAGGED");
+    override val labels = Set(raw.Label("TAGGED"), raw.Label("UUID"));
+    def rev_supports: Seq[User] = predecessorsAs(User, Supports)
+  };
+  case class TaggedStart(startNode: Tag, rawItem: raw.Relation, endNode: Tagged) extends Relation[Tag, Tagged];
+  case class TaggedEnd(startNode: Tagged, rawItem: raw.Relation, endNode: Taggable) extends Relation[Tagged, Taggable];
+  object WholeExampleSchemaHyperRelations {
+    def empty = new WholeExampleSchemaHyperRelations(raw.Graph.empty);
+    def remove(items: Item*) = {
+      val wrapper = empty;
+      wrapper.remove(((items): _*));
+      wrapper
+    };
+    def apply(items: Item*) = {
+      val wrapper = empty;
+      wrapper.add(((items): _*));
+      wrapper
     }
   };
-  case class Tags(node: raw.Node) extends HyperRelation[Tag, TagToTags, Tags, TagsToTaggable, Taggable] with Uuid {
-    override val label = raw.Label("TAGS");
-    override val labels = Set(raw.Label("TAGS"), raw.Label("UUID"))
-  };
-  case class TagToTags(startNode: Tag, relation: raw.Relation, endNode: Tags) extends Relation[Tag, Tags];
-  case class TagsToTaggable(startNode: Tags, relation: raw.Relation, endNode: Taggable) extends Relation[Tags, Taggable]
+  case class WholeExampleSchemaHyperRelations(graph: raw.Graph) extends Graph {
+    def tags: Seq[Tag] = nodesAs(Tag);
+    def users: Seq[User] = nodesAs(User);
+    def articles: Seq[Article] = nodesAs(Article);
+    def supports: Seq[Supports] = relationsAs(Supports);
+    def taggeds: Seq[Tagged] = hyperRelationsAs(Tagged);
+    def uuids: Seq[Uuid] = Seq.empty.++(tags).++(users).++(articles).++(taggeds);
+    def taggables: Seq[Taggable] = Seq.empty.++(articles);
+    def uuidRelations: (Seq[_$165] forSome { 
+      type _$165 <: Relation[Uuid, Uuid]
+    }) = Seq.empty.++(supports);
+    def taggableRelations: (Seq[_$166] forSome { 
+      type _$166 <: Relation[Taggable, Taggable]
+    }) = Seq.empty;
+    def uuidAbstractRelations: (Seq[_$167] forSome { 
+      type _$167 <: AbstractRelation[Uuid, Uuid]
+    }) = Seq.empty.++(supports);
+    def taggableAbstractRelations: (Seq[_$168] forSome { 
+      type _$168 <: AbstractRelation[Taggable, Taggable]
+    }) = Seq.empty;
+    def uuidHyperRelations: Seq[(HyperRelation[Uuid, _$176, _$172, _$170, Uuid] forSome { 
+      type _$176 <: (Relation[Uuid, _$175] forSome { 
+        type _$175
+      });
+      type _$172 <: (HyperRelation[Uuid, _$169, _$174, _$171, Uuid] forSome { 
+        type _$169;
+        type _$174;
+        type _$171
+      });
+      type _$170 <: (Relation[_$173, Uuid] forSome { 
+        type _$173
+      })
+    })] = Seq.empty;
+    def taggableHyperRelations: Seq[(HyperRelation[Taggable, _$184, _$180, _$178, Taggable] forSome { 
+      type _$184 <: (Relation[Taggable, _$183] forSome { 
+        type _$183
+      });
+      type _$180 <: (HyperRelation[Taggable, _$177, _$182, _$179, Taggable] forSome { 
+        type _$177;
+        type _$182;
+        type _$179
+      });
+      type _$178 <: (Relation[_$181, Taggable] forSome { 
+        type _$181
+      })
+    })] = Seq.empty;
+    def nodes: Seq[Node] = Seq.empty.++(tags).++(users).++(articles).++(taggeds);
+    def relations: (Seq[_$196] forSome { 
+      type _$196 <: (Relation[_$193, _$190] forSome { 
+        type _$193;
+        type _$190
+      })
+    }) = Seq.empty.++(supports);
+    def abstractRelations: (Seq[_$187] forSome { 
+      type _$187 <: (AbstractRelation[_$192, _$189] forSome { 
+        type _$192;
+        type _$189
+      })
+    }) = Seq.empty.++(supports).++(taggeds);
+    def hyperRelations: (Seq[_$186] forSome { 
+      type _$186 <: (HyperRelation[_$191, _$188, _$185, _$195, _$194] forSome { 
+        type _$191;
+        type _$188;
+        type _$185;
+        type _$195;
+        type _$194
+      })
+    }) = Seq.empty.++(taggeds)
+  }
 }

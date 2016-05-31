@@ -1,71 +1,127 @@
 object ExampleSchemaMultipleInheritance {
   import renesca.{graph=>raw};
+  import renesca.QueryHandler;
   import renesca.schema._;
   import renesca.parameter._;
   import renesca.parameter.implicits._;
-  val nodeLabelToFactory = Map[raw.Label, (NodeFactory[_$38] forSome { 
-    type _$38 <: Node
-  })](scala.Tuple2("ARTICLE", Article), scala.Tuple2("TAG", Tag));
-  trait RootNodeTraitFactory[NODE <: Node] {
-    val nodeLabels: Set[raw.Label] = Set("ARTICLE", "TAG");
-    def nodeLabel(node: raw.Node): raw.Label = nodeLabels.intersect(node.labels).head;
-    def factory(node: raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
+  val nodeLabelToFactory = Map[Set[raw.Label], NodeFactory[Node]](scala.Tuple2(Uuid.labels, UuidMatches), scala.Tuple2(Timestamp.labels, TimestampMatches), scala.Tuple2(Taggable.labels, TaggableMatches), scala.Tuple2(Article.labels, Article), scala.Tuple2(Tag.labels, Tag));
+  trait RootNodeTraitFactory[+NODE <: Node] {
+    def factory(node: raw.Node) = nodeLabelToFactory(node.labels.toSet).asInstanceOf[NodeFactory[NODE]];
     def wrap(node: raw.Node) = factory(node).wrap(node)
   };
-  trait UuidFactory[NODE <: Uuid] extends NodeFactory[NODE];
-  object Uuid extends RootNodeTraitFactory[Uuid] {
-    val label = raw.Label("UUID");
-    val labels = Set(raw.Label("UUID"))
+  def setupDbConstraints(queryHandler: QueryHandler) = ();
+  trait UuidMatchesFactory[+NODE <: Uuid] extends NodeFactory[NODE] {
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
   };
-  trait TimestampFactory[NODE <: Timestamp] extends NodeFactory[NODE];
-  object Timestamp extends RootNodeTraitFactory[Timestamp] {
-    val label = raw.Label("TIMESTAMP");
-    val labels = Set(raw.Label("TIMESTAMP"))
+  trait UuidFactory[+NODE <: Uuid] extends NodeFactory[NODE] with UuidMatchesFactory[NODE];
+  object Uuid extends RootNodeTraitFactory[Uuid] with UuidMatchesFactory[Uuid] {
+    val label = UuidMatches.label;
+    val labels = UuidMatches.labels;
+    def matches(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = UuidMatches.matches(uuid, matches);
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = this.matches(uuid, matches)
   };
-  trait TaggableFactory[NODE <: Taggable] extends NodeFactory[NODE];
-  object Taggable extends RootNodeTraitFactory[Taggable] {
-    val label = raw.Label("TAGGABLE");
-    val labels = Set(raw.Label("TAGGABLE"))
+  trait TimestampMatchesFactory[+NODE <: Timestamp] extends NodeFactory[NODE] {
+    def matchesTimestamp(timestamp: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): NODE
+  };
+  trait TimestampFactory[+NODE <: Timestamp] extends NodeFactory[NODE] with TimestampMatchesFactory[NODE];
+  object Timestamp extends RootNodeTraitFactory[Timestamp] with TimestampMatchesFactory[Timestamp] {
+    val label = TimestampMatches.label;
+    val labels = TimestampMatches.labels;
+    def matches(timestamp: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): TimestampMatches = TimestampMatches.matches(timestamp, matches);
+    def matchesTimestamp(timestamp: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): TimestampMatches = this.matches(timestamp, matches)
+  };
+  trait TaggableMatchesFactory[+NODE <: Taggable] extends NodeFactory[NODE] {
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): NODE
+  };
+  trait TaggableFactory[+NODE <: Taggable] extends NodeFactory[NODE] with TaggableMatchesFactory[NODE];
+  object Taggable extends RootNodeTraitFactory[Taggable] with TaggableMatchesFactory[Taggable] {
+    val label = TaggableMatches.label;
+    val labels = TaggableMatches.labels;
+    def matches(matches: Set[PropertyKey] = Set.empty): TaggableMatches = TaggableMatches.matches(matches);
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): TaggableMatches = this.matches(matches)
   };
   trait Uuid extends Node {
-    def uuid: String = item.properties("uuid").asInstanceOf[StringPropertyValue]
+    def uuid: String = rawItem.properties("uuid").asInstanceOf[StringPropertyValue]
   };
   trait Timestamp extends Node {
-    def timestamp: Long = item.properties("timestamp").asInstanceOf[LongPropertyValue]
+    def timestamp: Long = rawItem.properties("timestamp").asInstanceOf[LongPropertyValue]
   };
-  trait Taggable extends Node;
+  trait Taggable extends Node {
+    def rev_categorizes: Seq[Tag]
+  };
+  object UuidMatches extends UuidMatchesFactory[UuidMatches] {
+    val label = raw.Label("UUID");
+    val labels = Set(raw.Label("UUID"));
+    def wrap(node: raw.Node) = new UuidMatches(node);
+    def matches(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (uuid.isDefined)
+        wrapped.rawItem.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): UuidMatches = this.matches(uuid, matches)
+  };
+  object TimestampMatches extends TimestampMatchesFactory[TimestampMatches] {
+    val label = raw.Label("TIMESTAMP");
+    val labels = Set(raw.Label("TIMESTAMP"));
+    def wrap(node: raw.Node) = new TimestampMatches(node);
+    def matches(timestamp: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): TimestampMatches = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (timestamp.isDefined)
+        wrapped.rawItem.properties.update("timestamp", timestamp.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesTimestamp(timestamp: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): TimestampMatches = this.matches(timestamp, matches)
+  };
+  object TaggableMatches extends TaggableMatchesFactory[TaggableMatches] {
+    val label = raw.Label("TAGGABLE");
+    val labels = Set(raw.Label("TAGGABLE"));
+    def wrap(node: raw.Node) = new TaggableMatches(node);
+    def matches(matches: Set[PropertyKey] = Set.empty): TaggableMatches = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      wrapped
+    };
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): TaggableMatches = this.matches(matches)
+  };
   object Article extends UuidFactory[Article] with TimestampFactory[Article] with TaggableFactory[Article] {
     val label = raw.Label("ARTICLE");
     val labels = Set(raw.Label("ARTICLE"), raw.Label("UUID"), raw.Label("TIMESTAMP"), raw.Label("TAGGABLE"));
     def wrap(node: raw.Node) = new Article(node);
+    def matches(content: Option[String] = None, timestamp: Option[Long] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Article = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (content.isDefined)
+        wrapped.rawItem.properties.update("content", content.get)
+      else
+        ();
+      if (timestamp.isDefined)
+        wrapped.rawItem.properties.update("timestamp", timestamp.get)
+      else
+        ();
+      if (uuid.isDefined)
+        wrapped.rawItem.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Article = this.matches(None, None, uuid, matches);
+    def matchesTimestamp(timestamp: Option[Long] = None, matches: Set[PropertyKey] = Set.empty): Article = this.matches(None, timestamp, None, matches);
+    def matchesTaggable(matches: Set[PropertyKey] = Set.empty): Article = this.matches(None, None, None, matches);
     def create(content: String, timestamp: Long = System.currentTimeMillis, uuid: String = java.util.UUID.randomUUID.toString): Article = {
       val wrapped = wrap(raw.Node.create(labels));
-      wrapped.node.properties.update("content", content);
-      wrapped.node.properties.update("timestamp", timestamp);
-      wrapped.node.properties.update("uuid", uuid);
+      wrapped.rawItem.properties.update("content", content);
+      wrapped.rawItem.properties.update("timestamp", timestamp);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     };
     def merge(content: String, timestamp: Long = System.currentTimeMillis, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Article = {
       val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      wrapped.node.properties.update("content", content);
-      wrapped.node.properties.update("timestamp", timestamp);
-      wrapped.node.properties.update("uuid", uuid);
-      wrapped
-    };
-    def matches(content: Option[String] = None, timestamp: Option[Long] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Article = {
-      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
-      if (content.isDefined)
-        wrapped.node.properties.update("content", content.get)
-      else
-        ();
-      if (timestamp.isDefined)
-        wrapped.node.properties.update("timestamp", timestamp.get)
-      else
-        ();
-      if (uuid.isDefined)
-        wrapped.node.properties.update("uuid", uuid.get)
-      else
-        ();
+      wrapped.rawItem.properties.update("content", content);
+      wrapped.rawItem.properties.update("timestamp", timestamp);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     }
   };
@@ -73,149 +129,273 @@ object ExampleSchemaMultipleInheritance {
     val label = raw.Label("TAG");
     val labels = Set(raw.Label("TAG"), raw.Label("UUID"));
     def wrap(node: raw.Node) = new Tag(node);
+    def matches(name: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tag = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (name.isDefined)
+        wrapped.rawItem.properties.update("name", name.get)
+      else
+        ();
+      if (uuid.isDefined)
+        wrapped.rawItem.properties.update("uuid", uuid.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesUuid(uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tag = this.matches(None, uuid, matches);
     def create(name: String, uuid: String = java.util.UUID.randomUUID.toString): Tag = {
       val wrapped = wrap(raw.Node.create(labels));
-      wrapped.node.properties.update("name", name);
-      wrapped.node.properties.update("uuid", uuid);
+      wrapped.rawItem.properties.update("name", name);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     };
     def merge(name: String, uuid: String = java.util.UUID.randomUUID.toString, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Tag = {
       val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      wrapped.node.properties.update("name", name);
-      wrapped.node.properties.update("uuid", uuid);
-      wrapped
-    };
-    def matches(name: Option[String] = None, uuid: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Tag = {
-      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
-      if (name.isDefined)
-        wrapped.node.properties.update("name", name.get)
-      else
-        ();
-      if (uuid.isDefined)
-        wrapped.node.properties.update("uuid", uuid.get)
-      else
-        ();
+      wrapped.rawItem.properties.update("name", name);
+      wrapped.rawItem.properties.update("uuid", uuid);
       wrapped
     }
   };
-  case class Article(node: raw.Node) extends Uuid with Timestamp with Taggable {
+  case class UuidMatches(rawItem: raw.Node) extends Uuid {
+    override val label = raw.Label("UUID");
+    override val labels = Set(raw.Label("UUID"))
+  };
+  case class TimestampMatches(rawItem: raw.Node) extends Timestamp {
+    override val label = raw.Label("TIMESTAMP");
+    override val labels = Set(raw.Label("TIMESTAMP"))
+  };
+  case class TaggableMatches(rawItem: raw.Node) extends Taggable {
+    override val label = raw.Label("TAGGABLE");
+    override val labels = Set(raw.Label("TAGGABLE"));
+    def rev_categorizes: Seq[Tag] = predecessorsAs(Tag, Categorizes)
+  };
+  case class Article(rawItem: raw.Node) extends Uuid with Timestamp with Taggable {
     override val label = raw.Label("ARTICLE");
     override val labels = Set(raw.Label("ARTICLE"), raw.Label("UUID"), raw.Label("TIMESTAMP"), raw.Label("TAGGABLE"));
-    def rev_categorizes: Set[Tag] = predecessorsAs(Tag, Categorizes);
-    def content: String = item.properties("content").asInstanceOf[StringPropertyValue]
+    def rev_categorizes: Seq[Tag] = predecessorsAs(Tag, Categorizes);
+    def content: String = rawItem.properties("content").asInstanceOf[StringPropertyValue]
   };
-  case class Tag(node: raw.Node) extends Uuid {
+  case class Tag(rawItem: raw.Node) extends Uuid {
     override val label = raw.Label("TAG");
     override val labels = Set(raw.Label("TAG"), raw.Label("UUID"));
-    def categorizesArticles: Set[Article] = successorsAs(Article, Categorizes);
-    def categorizes: Set[Taggable] = Set.empty.++(categorizesArticles);
-    def name: String = item.properties("name").asInstanceOf[StringPropertyValue]
+    def categorizesArticles: Seq[Article] = successorsAs(Article, Categorizes);
+    def categorizes: Seq[Taggable] = Seq.empty.++(categorizesArticles);
+    def name: String = rawItem.properties("name").asInstanceOf[StringPropertyValue]
   };
   object Categorizes extends RelationFactory[Tag, Categorizes, Taggable] with AbstractRelationFactory[Tag, Categorizes, Taggable] {
     val relationType = raw.RelationType("CATEGORIZES");
     def wrap(relation: raw.Relation) = Categorizes(Tag.wrap(relation.startNode), relation, Taggable.wrap(relation.endNode));
     def create(startNode: Tag, endNode: Taggable): Categorizes = {
-      val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
+      val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
       wrapped
     };
     def merge(startNode: Tag, endNode: Taggable, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Categorizes = {
-      val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
+      val wrapped = wrap(raw.Relation.merge(startNode.rawItem, relationType, endNode.rawItem, merge = merge, onMatch = onMatch));
       wrapped
     };
     def matches(startNode: Tag, endNode: Taggable, matches: Set[PropertyKey] = Set.empty): Categorizes = {
-      val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+      val wrapped = wrap(raw.Relation.matches(startNode.rawItem, relationType, endNode.rawItem, matches = matches));
       wrapped
     }
   };
-  case class Categorizes(startNode: Tag, relation: raw.Relation, endNode: Taggable) extends Relation[Tag, Taggable];
+  case class Categorizes(startNode: Tag, rawItem: raw.Relation, endNode: Taggable) extends Relation[Tag, Taggable];
+  object WholeExampleSchemaMultipleInheritance {
+    def empty = new WholeExampleSchemaMultipleInheritance(raw.Graph.empty);
+    def remove(items: Item*) = {
+      val wrapper = empty;
+      wrapper.remove(((items): _*));
+      wrapper
+    };
+    def apply(items: Item*) = {
+      val wrapper = empty;
+      wrapper.add(((items): _*));
+      wrapper
+    }
+  };
   object Blog {
-    def empty = new Blog(raw.Graph.empty)
+    def empty = new Blog(raw.Graph.empty);
+    def remove(items: Item*) = {
+      val wrapper = empty;
+      wrapper.remove(((items): _*));
+      wrapper
+    };
+    def apply(items: Item*) = {
+      val wrapper = empty;
+      wrapper.add(((items): _*));
+      wrapper
+    }
+  };
+  case class WholeExampleSchemaMultipleInheritance(graph: raw.Graph) extends Graph {
+    def articles: Seq[Article] = nodesAs(Article);
+    def tags: Seq[Tag] = nodesAs(Tag);
+    def categorizes: Seq[Categorizes] = relationsAs(Categorizes);
+    def uuids: Seq[Uuid] = Seq.empty.++(articles).++(tags);
+    def timestamps: Seq[Timestamp] = Seq.empty.++(articles);
+    def taggables: Seq[Taggable] = Seq.empty.++(articles);
+    def uuidRelations: (Seq[_$81] forSome { 
+      type _$81 <: Relation[Uuid, Uuid]
+    }) = Seq.empty;
+    def timestampRelations: (Seq[_$82] forSome { 
+      type _$82 <: Relation[Timestamp, Timestamp]
+    }) = Seq.empty;
+    def taggableRelations: (Seq[_$83] forSome { 
+      type _$83 <: Relation[Taggable, Taggable]
+    }) = Seq.empty;
+    def uuidAbstractRelations: (Seq[_$84] forSome { 
+      type _$84 <: AbstractRelation[Uuid, Uuid]
+    }) = Seq.empty;
+    def timestampAbstractRelations: (Seq[_$85] forSome { 
+      type _$85 <: AbstractRelation[Timestamp, Timestamp]
+    }) = Seq.empty;
+    def taggableAbstractRelations: (Seq[_$86] forSome { 
+      type _$86 <: AbstractRelation[Taggable, Taggable]
+    }) = Seq.empty;
+    def uuidHyperRelations: Seq[(HyperRelation[Uuid, _$94, _$90, _$88, Uuid] forSome { 
+      type _$94 <: (Relation[Uuid, _$93] forSome { 
+        type _$93
+      });
+      type _$90 <: (HyperRelation[Uuid, _$87, _$92, _$89, Uuid] forSome { 
+        type _$87;
+        type _$92;
+        type _$89
+      });
+      type _$88 <: (Relation[_$91, Uuid] forSome { 
+        type _$91
+      })
+    })] = Seq.empty;
+    def timestampHyperRelations: Seq[(HyperRelation[Timestamp, _$102, _$98, _$96, Timestamp] forSome { 
+      type _$102 <: (Relation[Timestamp, _$101] forSome { 
+        type _$101
+      });
+      type _$98 <: (HyperRelation[Timestamp, _$95, _$100, _$97, Timestamp] forSome { 
+        type _$95;
+        type _$100;
+        type _$97
+      });
+      type _$96 <: (Relation[_$99, Timestamp] forSome { 
+        type _$99
+      })
+    })] = Seq.empty;
+    def taggableHyperRelations: Seq[(HyperRelation[Taggable, _$110, _$106, _$104, Taggable] forSome { 
+      type _$110 <: (Relation[Taggable, _$109] forSome { 
+        type _$109
+      });
+      type _$106 <: (HyperRelation[Taggable, _$103, _$108, _$105, Taggable] forSome { 
+        type _$103;
+        type _$108;
+        type _$105
+      });
+      type _$104 <: (Relation[_$107, Taggable] forSome { 
+        type _$107
+      })
+    })] = Seq.empty;
+    def nodes: Seq[Node] = Seq.empty.++(articles).++(tags);
+    def relations: (Seq[_$122] forSome { 
+      type _$122 <: (Relation[_$119, _$116] forSome { 
+        type _$119;
+        type _$116
+      })
+    }) = Seq.empty.++(categorizes);
+    def abstractRelations: (Seq[_$113] forSome { 
+      type _$113 <: (AbstractRelation[_$118, _$115] forSome { 
+        type _$118;
+        type _$115
+      })
+    }) = Seq.empty.++(categorizes);
+    def hyperRelations: (Seq[_$112] forSome { 
+      type _$112 <: (HyperRelation[_$117, _$114, _$111, _$121, _$120] forSome { 
+        type _$117;
+        type _$114;
+        type _$111;
+        type _$121;
+        type _$120
+      })
+    }) = Seq.empty
   };
   case class Blog(graph: raw.Graph) extends Graph {
-    def articles: Set[Article] = nodesAs(Article);
-    def tags: Set[Tag] = nodesAs(Tag);
-    def categorizes: Set[Categorizes] = relationsAs(Categorizes);
-    def uuids: Set[Uuid] = Set.empty.++(articles).++(tags);
-    def timestamps: Set[Timestamp] = Set.empty.++(articles);
-    def taggables: Set[Taggable] = Set.empty.++(articles);
-    def uuidRelations: (Set[_$39] forSome { 
-      type _$39 <: Relation[Uuid, Uuid]
-    }) = Set.empty;
-    def timestampRelations: (Set[_$40] forSome { 
-      type _$40 <: Relation[Timestamp, Timestamp]
-    }) = Set.empty;
-    def taggableRelations: (Set[_$41] forSome { 
-      type _$41 <: Relation[Taggable, Taggable]
-    }) = Set.empty;
-    def uuidAbstractRelations: (Set[_$42] forSome { 
-      type _$42 <: AbstractRelation[Uuid, Uuid]
-    }) = Set.empty;
-    def timestampAbstractRelations: (Set[_$43] forSome { 
-      type _$43 <: AbstractRelation[Timestamp, Timestamp]
-    }) = Set.empty;
-    def taggableAbstractRelations: (Set[_$44] forSome { 
-      type _$44 <: AbstractRelation[Taggable, Taggable]
-    }) = Set.empty;
-    def uuidHyperRelations: Set[(HyperRelation[Uuid, _$52, _$51, _$49, Uuid] forSome { 
-      type _$52 <: (Relation[Uuid, _$47] forSome { 
-        type _$47
+    def articles: Seq[Article] = nodesAs(Article);
+    def tags: Seq[Tag] = nodesAs(Tag);
+    def categorizes: Seq[Categorizes] = relationsAs(Categorizes);
+    def uuids: Seq[Uuid] = Seq.empty.++(articles).++(tags);
+    def timestamps: Seq[Timestamp] = Seq.empty.++(articles);
+    def taggables: Seq[Taggable] = Seq.empty.++(articles);
+    def uuidRelations: (Seq[_$123] forSome { 
+      type _$123 <: Relation[Uuid, Uuid]
+    }) = Seq.empty;
+    def timestampRelations: (Seq[_$124] forSome { 
+      type _$124 <: Relation[Timestamp, Timestamp]
+    }) = Seq.empty;
+    def taggableRelations: (Seq[_$125] forSome { 
+      type _$125 <: Relation[Taggable, Taggable]
+    }) = Seq.empty;
+    def uuidAbstractRelations: (Seq[_$126] forSome { 
+      type _$126 <: AbstractRelation[Uuid, Uuid]
+    }) = Seq.empty;
+    def timestampAbstractRelations: (Seq[_$127] forSome { 
+      type _$127 <: AbstractRelation[Timestamp, Timestamp]
+    }) = Seq.empty;
+    def taggableAbstractRelations: (Seq[_$128] forSome { 
+      type _$128 <: AbstractRelation[Taggable, Taggable]
+    }) = Seq.empty;
+    def uuidHyperRelations: Seq[(HyperRelation[Uuid, _$136, _$132, _$130, Uuid] forSome { 
+      type _$136 <: (Relation[Uuid, _$135] forSome { 
+        type _$135
       });
-      type _$51 <: (HyperRelation[Uuid, _$48, _$46, _$50, Uuid] forSome { 
-        type _$48;
-        type _$46;
-        type _$50
+      type _$132 <: (HyperRelation[Uuid, _$129, _$134, _$131, Uuid] forSome { 
+        type _$129;
+        type _$134;
+        type _$131
       });
-      type _$49 <: (Relation[_$45, Uuid] forSome { 
-        type _$45
+      type _$130 <: (Relation[_$133, Uuid] forSome { 
+        type _$133
       })
-    })] = Set.empty;
-    def timestampHyperRelations: Set[(HyperRelation[Timestamp, _$60, _$59, _$57, Timestamp] forSome { 
-      type _$60 <: (Relation[Timestamp, _$55] forSome { 
-        type _$55
+    })] = Seq.empty;
+    def timestampHyperRelations: Seq[(HyperRelation[Timestamp, _$144, _$140, _$138, Timestamp] forSome { 
+      type _$144 <: (Relation[Timestamp, _$143] forSome { 
+        type _$143
       });
-      type _$59 <: (HyperRelation[Timestamp, _$56, _$54, _$58, Timestamp] forSome { 
-        type _$56;
-        type _$54;
-        type _$58
+      type _$140 <: (HyperRelation[Timestamp, _$137, _$142, _$139, Timestamp] forSome { 
+        type _$137;
+        type _$142;
+        type _$139
       });
-      type _$57 <: (Relation[_$53, Timestamp] forSome { 
-        type _$53
+      type _$138 <: (Relation[_$141, Timestamp] forSome { 
+        type _$141
       })
-    })] = Set.empty;
-    def taggableHyperRelations: Set[(HyperRelation[Taggable, _$68, _$67, _$65, Taggable] forSome { 
-      type _$68 <: (Relation[Taggable, _$63] forSome { 
-        type _$63
+    })] = Seq.empty;
+    def taggableHyperRelations: Seq[(HyperRelation[Taggable, _$152, _$148, _$146, Taggable] forSome { 
+      type _$152 <: (Relation[Taggable, _$151] forSome { 
+        type _$151
       });
-      type _$67 <: (HyperRelation[Taggable, _$64, _$62, _$66, Taggable] forSome { 
-        type _$64;
-        type _$62;
-        type _$66
+      type _$148 <: (HyperRelation[Taggable, _$145, _$150, _$147, Taggable] forSome { 
+        type _$145;
+        type _$150;
+        type _$147
       });
-      type _$65 <: (Relation[_$61, Taggable] forSome { 
-        type _$61
+      type _$146 <: (Relation[_$149, Taggable] forSome { 
+        type _$149
       })
-    })] = Set.empty;
-    def nodes: Set[Node] = Set.empty.++(articles).++(tags);
-    def relations: (Set[_$80] forSome { 
-      type _$80 <: (Relation[_$73, _$77] forSome { 
-        type _$73;
-        type _$77
+    })] = Seq.empty;
+    def nodes: Seq[Node] = Seq.empty.++(articles).++(tags);
+    def relations: (Seq[_$164] forSome { 
+      type _$164 <: (Relation[_$161, _$158] forSome { 
+        type _$161;
+        type _$158
       })
-    }) = Set.empty.++(categorizes);
-    def abstractRelations: (Set[_$75] forSome { 
-      type _$75 <: (AbstractRelation[_$72, _$76] forSome { 
-        type _$72;
-        type _$76
+    }) = Seq.empty.++(categorizes);
+    def abstractRelations: (Seq[_$155] forSome { 
+      type _$155 <: (AbstractRelation[_$160, _$157] forSome { 
+        type _$160;
+        type _$157
       })
-    }) = Set.empty.++(categorizes);
-    def hyperRelations: (Set[_$74] forSome { 
-      type _$74 <: (HyperRelation[_$71, _$70, _$69, _$79, _$78] forSome { 
-        type _$71;
-        type _$70;
-        type _$69;
-        type _$79;
-        type _$78
+    }) = Seq.empty.++(categorizes);
+    def hyperRelations: (Seq[_$154] forSome { 
+      type _$154 <: (HyperRelation[_$159, _$156, _$153, _$163, _$162] forSome { 
+        type _$159;
+        type _$156;
+        type _$153;
+        type _$163;
+        type _$162
       })
-    }) = Set.empty
+    }) = Seq.empty
   }
 }

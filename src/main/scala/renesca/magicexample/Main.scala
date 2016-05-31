@@ -176,9 +176,9 @@ object Main extends App {
       // (n)-[]->(hyperRelation)-[]->(m)
       // It behaves like node and relation at the same time
       // and therefore can extend node and relation traits.
-      @HyperRelation class Tags(startNode: Tag, endNode: Taggable) extends Uuid
+      @HyperRelation class Tagged(startNode: Tag, endNode: Taggable) extends Uuid
       // Because they are nodes, we can connect a HyperRelation with another Node
-      @Relation class Supports(startNode: User, endNode: Tags)
+      @Relation class Supports(startNode: User, endNode: Tagged)
     }
 
     import ExampleSchemaHyperRelations._
@@ -186,7 +186,7 @@ object Main extends App {
     val helpful = Tag.create(name="helpful")
     val article = Article.create(content="Dog eats Snake")
 
-    val tags = Tags.create(helpful, article) // HyperRelation
+    val tags = Tagged.create(helpful, article) // HyperRelation
     val supports = Supports.create(user, tags) // Relation from user to HyperRelation
   }
 

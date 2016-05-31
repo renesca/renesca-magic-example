@@ -1,138 +1,184 @@
 object ExampleSchemaTraits {
   import renesca.{graph=>raw};
+  import renesca.QueryHandler;
   import renesca.schema._;
   import renesca.parameter._;
   import renesca.parameter.implicits._;
-  val nodeLabelToFactory = Map[raw.Label, (NodeFactory[_$15] forSome { 
-    type _$15 <: Node
-  })](scala.Tuple2("FISH", Fish), scala.Tuple2("DOG", Dog));
-  trait RootNodeTraitFactory[NODE <: Node] {
-    val nodeLabels: Set[raw.Label] = Set("FISH", "DOG");
-    def nodeLabel(node: raw.Node): raw.Label = nodeLabels.intersect(node.labels).head;
-    def factory(node: raw.Node) = nodeLabelToFactory(nodeLabel(node)).asInstanceOf[NodeFactory[NODE]];
+  val nodeLabelToFactory = Map[Set[raw.Label], NodeFactory[Node]](scala.Tuple2(Animal.labels, AnimalMatches), scala.Tuple2(Fish.labels, Fish), scala.Tuple2(Dog.labels, Dog));
+  trait RootNodeTraitFactory[+NODE <: Node] {
+    def factory(node: raw.Node) = nodeLabelToFactory(node.labels.toSet).asInstanceOf[NodeFactory[NODE]];
     def wrap(node: raw.Node) = factory(node).wrap(node)
   };
-  trait AnimalFactory[NODE <: Animal] extends NodeFactory[NODE] {
-    def createAnimal(name: String): NODE;
-    def mergeAnimal(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE;
+  def setupDbConstraints(queryHandler: QueryHandler) = ();
+  trait AnimalMatchesFactory[+NODE <: Animal] extends NodeFactory[NODE] {
     def matchesAnimal(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): NODE
   };
-  object Animal extends RootNodeTraitFactory[Animal] {
-    val label = raw.Label("ANIMAL");
-    val labels = Set(raw.Label("ANIMAL"))
+  trait AnimalFactory[+NODE <: Animal] extends NodeFactory[NODE] with AnimalMatchesFactory[NODE] {
+    def createAnimal(name: String): NODE;
+    def mergeAnimal(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): NODE
+  };
+  object Animal extends RootNodeTraitFactory[Animal] with AnimalMatchesFactory[Animal] {
+    val label = AnimalMatches.label;
+    val labels = AnimalMatches.labels;
+    def matches(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): AnimalMatches = AnimalMatches.matches(name, matches);
+    def matchesAnimal(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): AnimalMatches = this.matches(name, matches)
   };
   trait Animal extends Node {
-    def name: String = item.properties("name").asInstanceOf[StringPropertyValue]
+    def eatsFishs: Seq[Fish];
+    def eatsDogs: Seq[Dog];
+    def drinksFishs: Seq[Fish];
+    def drinksDogs: Seq[Dog];
+    def eats: Seq[Animal];
+    def drinks: Seq[Animal];
+    def rev_eatsFishs: Seq[Fish];
+    def rev_eatsDogs: Seq[Dog];
+    def rev_drinksFishs: Seq[Fish];
+    def rev_drinksDogs: Seq[Dog];
+    def rev_eats: Seq[Animal];
+    def rev_drinks: Seq[Animal];
+    def name: String = rawItem.properties("name").asInstanceOf[StringPropertyValue]
+  };
+  object AnimalMatches extends AnimalMatchesFactory[AnimalMatches] {
+    val label = raw.Label("ANIMAL");
+    val labels = Set(raw.Label("ANIMAL"));
+    def wrap(node: raw.Node) = new AnimalMatches(node);
+    def matches(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): AnimalMatches = {
+      val wrapped = wrap(raw.Node.matches(labels, matches = matches));
+      if (name.isDefined)
+        wrapped.rawItem.properties.update("name", name.get)
+      else
+        ();
+      wrapped
+    };
+    def matchesAnimal(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): AnimalMatches = this.matches(name, matches)
   };
   object Fish extends AnimalFactory[Fish] {
     val label = raw.Label("FISH");
     val labels = Set(raw.Label("FISH"), raw.Label("ANIMAL"));
     def wrap(node: raw.Node) = new Fish(node);
-    def create(name: String): Fish = {
-      val wrapped = wrap(raw.Node.create(labels));
-      wrapped.node.properties.update("name", name);
-      wrapped
-    };
-    def merge(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Fish = {
-      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      wrapped.node.properties.update("name", name);
-      wrapped
-    };
     def matches(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Fish = {
       val wrapped = wrap(raw.Node.matches(labels, matches = matches));
       if (name.isDefined)
-        wrapped.node.properties.update("name", name.get)
+        wrapped.rawItem.properties.update("name", name.get)
       else
         ();
       wrapped
     };
+    def matchesAnimal(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Fish = this.matches(name, matches);
+    def create(name: String): Fish = {
+      val wrapped = wrap(raw.Node.create(labels));
+      wrapped.rawItem.properties.update("name", name);
+      wrapped
+    };
+    def merge(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Fish = {
+      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      wrapped.rawItem.properties.update("name", name);
+      wrapped
+    };
     def createAnimal(name: String): Fish = this.create(name);
-    def mergeAnimal(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Fish = this.merge(name, merge, onMatch);
-    def matchesAnimal(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Fish = this.matches(name, matches)
+    def mergeAnimal(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Fish = this.merge(name, merge, onMatch)
   };
   object Dog extends AnimalFactory[Dog] {
     val label = raw.Label("DOG");
     val labels = Set(raw.Label("DOG"), raw.Label("ANIMAL"));
     def wrap(node: raw.Node) = new Dog(node);
-    def create(name: String): Dog = {
-      val wrapped = wrap(raw.Node.create(labels));
-      wrapped.node.properties.update("name", name);
-      wrapped
-    };
-    def merge(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Dog = {
-      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
-      wrapped.node.properties.update("name", name);
-      wrapped
-    };
     def matches(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Dog = {
       val wrapped = wrap(raw.Node.matches(labels, matches = matches));
       if (name.isDefined)
-        wrapped.node.properties.update("name", name.get)
+        wrapped.rawItem.properties.update("name", name.get)
       else
         ();
       wrapped
     };
+    def matchesAnimal(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Dog = this.matches(name, matches);
+    def create(name: String): Dog = {
+      val wrapped = wrap(raw.Node.create(labels));
+      wrapped.rawItem.properties.update("name", name);
+      wrapped
+    };
+    def merge(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Dog = {
+      val wrapped = wrap(raw.Node.merge(labels, merge = merge, onMatch = onMatch));
+      wrapped.rawItem.properties.update("name", name);
+      wrapped
+    };
     def createAnimal(name: String): Dog = this.create(name);
-    def mergeAnimal(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Dog = this.merge(name, merge, onMatch);
-    def matchesAnimal(name: Option[String] = None, matches: Set[PropertyKey] = Set.empty): Dog = this.matches(name, matches)
+    def mergeAnimal(name: String, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Dog = this.merge(name, merge, onMatch)
   };
-  case class Fish(node: raw.Node) extends Animal {
+  case class AnimalMatches(rawItem: raw.Node) extends Animal {
+    override val label = raw.Label("ANIMAL");
+    override val labels = Set(raw.Label("ANIMAL"));
+    def eatsFishs: Seq[Fish] = successorsAs(Fish, Eats);
+    def eatsDogs: Seq[Dog] = successorsAs(Dog, Eats);
+    def drinksFishs: Seq[Fish] = successorsAs(Fish, Drinks);
+    def drinksDogs: Seq[Dog] = successorsAs(Dog, Drinks);
+    def eats: Seq[Animal] = Seq.empty.++(eatsFishs).++(eatsDogs);
+    def drinks: Seq[Animal] = Seq.empty.++(drinksFishs).++(drinksDogs);
+    def rev_eatsFishs: Seq[Fish] = predecessorsAs(Fish, Eats);
+    def rev_eatsDogs: Seq[Dog] = predecessorsAs(Dog, Eats);
+    def rev_drinksFishs: Seq[Fish] = predecessorsAs(Fish, Drinks);
+    def rev_drinksDogs: Seq[Dog] = predecessorsAs(Dog, Drinks);
+    def rev_eats: Seq[Animal] = Seq.empty.++(rev_eatsFishs).++(rev_eatsDogs);
+    def rev_drinks: Seq[Animal] = Seq.empty.++(rev_drinksFishs).++(rev_drinksDogs)
+  };
+  case class Fish(rawItem: raw.Node) extends Animal {
     override val label = raw.Label("FISH");
     override val labels = Set(raw.Label("FISH"), raw.Label("ANIMAL"));
-    def eatsFishs: Set[Fish] = successorsAs(Fish, Eats);
-    def eatsDogs: Set[Dog] = successorsAs(Dog, Eats);
-    def drinksFishs: Set[Fish] = successorsAs(Fish, Drinks);
-    def drinksDogs: Set[Dog] = successorsAs(Dog, Drinks);
-    def eats: Set[Animal] = Set.empty.++(eatsFishs).++(eatsDogs);
-    def drinks: Set[Animal] = Set.empty.++(drinksFishs).++(drinksDogs);
-    def rev_eatsFishs: Set[Fish] = predecessorsAs(Fish, Eats);
-    def rev_eatsDogs: Set[Dog] = predecessorsAs(Dog, Eats);
-    def rev_drinksFishs: Set[Fish] = predecessorsAs(Fish, Drinks);
-    def rev_drinksDogs: Set[Dog] = predecessorsAs(Dog, Drinks);
-    def rev_eats: Set[Animal] = Set.empty.++(rev_eatsFishs).++(rev_eatsDogs);
-    def rev_drinks: Set[Animal] = Set.empty.++(rev_drinksFishs).++(rev_drinksDogs)
+    def eatsFishs: Seq[Fish] = successorsAs(Fish, Eats);
+    def eatsDogs: Seq[Dog] = successorsAs(Dog, Eats);
+    def drinksFishs: Seq[Fish] = successorsAs(Fish, Drinks);
+    def drinksDogs: Seq[Dog] = successorsAs(Dog, Drinks);
+    def eats: Seq[Animal] = Seq.empty.++(eatsFishs).++(eatsDogs);
+    def drinks: Seq[Animal] = Seq.empty.++(drinksFishs).++(drinksDogs);
+    def rev_eatsFishs: Seq[Fish] = predecessorsAs(Fish, Eats);
+    def rev_eatsDogs: Seq[Dog] = predecessorsAs(Dog, Eats);
+    def rev_drinksFishs: Seq[Fish] = predecessorsAs(Fish, Drinks);
+    def rev_drinksDogs: Seq[Dog] = predecessorsAs(Dog, Drinks);
+    def rev_eats: Seq[Animal] = Seq.empty.++(rev_eatsFishs).++(rev_eatsDogs);
+    def rev_drinks: Seq[Animal] = Seq.empty.++(rev_drinksFishs).++(rev_drinksDogs)
   };
-  case class Dog(node: raw.Node) extends Animal {
+  case class Dog(rawItem: raw.Node) extends Animal {
     override val label = raw.Label("DOG");
     override val labels = Set(raw.Label("DOG"), raw.Label("ANIMAL"));
-    def eatsFishs: Set[Fish] = successorsAs(Fish, Eats);
-    def eatsDogs: Set[Dog] = successorsAs(Dog, Eats);
-    def drinksFishs: Set[Fish] = successorsAs(Fish, Drinks);
-    def drinksDogs: Set[Dog] = successorsAs(Dog, Drinks);
-    def eats: Set[Animal] = Set.empty.++(eatsFishs).++(eatsDogs);
-    def drinks: Set[Animal] = Set.empty.++(drinksFishs).++(drinksDogs);
-    def rev_eatsFishs: Set[Fish] = predecessorsAs(Fish, Eats);
-    def rev_eatsDogs: Set[Dog] = predecessorsAs(Dog, Eats);
-    def rev_drinksFishs: Set[Fish] = predecessorsAs(Fish, Drinks);
-    def rev_drinksDogs: Set[Dog] = predecessorsAs(Dog, Drinks);
-    def rev_eats: Set[Animal] = Set.empty.++(rev_eatsFishs).++(rev_eatsDogs);
-    def rev_drinks: Set[Animal] = Set.empty.++(rev_drinksFishs).++(rev_drinksDogs)
+    def eatsFishs: Seq[Fish] = successorsAs(Fish, Eats);
+    def eatsDogs: Seq[Dog] = successorsAs(Dog, Eats);
+    def drinksFishs: Seq[Fish] = successorsAs(Fish, Drinks);
+    def drinksDogs: Seq[Dog] = successorsAs(Dog, Drinks);
+    def eats: Seq[Animal] = Seq.empty.++(eatsFishs).++(eatsDogs);
+    def drinks: Seq[Animal] = Seq.empty.++(drinksFishs).++(drinksDogs);
+    def rev_eatsFishs: Seq[Fish] = predecessorsAs(Fish, Eats);
+    def rev_eatsDogs: Seq[Dog] = predecessorsAs(Dog, Eats);
+    def rev_drinksFishs: Seq[Fish] = predecessorsAs(Fish, Drinks);
+    def rev_drinksDogs: Seq[Dog] = predecessorsAs(Dog, Drinks);
+    def rev_eats: Seq[Animal] = Seq.empty.++(rev_eatsFishs).++(rev_eatsDogs);
+    def rev_drinks: Seq[Animal] = Seq.empty.++(rev_drinksFishs).++(rev_drinksDogs)
   };
-  trait ConsumesFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node] extends AbstractRelationFactory[START, RELATION, END] {
-    def createConsumes(startNode: START, endNode: END, funny: Boolean): RELATION;
-    def mergeConsumes(startNode: START, endNode: END, funny: Boolean, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): RELATION;
+  trait ConsumesMatchesFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node] extends AbstractRelationFactory[START, RELATION, END] {
     def matchesConsumes(startNode: START, endNode: END, funny: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): RELATION
   };
+  trait ConsumesFactory[START <: Node, +RELATION <: AbstractRelation[START, END], END <: Node] extends AbstractRelationFactory[START, RELATION, END] with ConsumesMatchesFactory[START, RELATION, END] {
+    def createConsumes(startNode: START, endNode: END, funny: Boolean): RELATION;
+    def mergeConsumes(startNode: START, endNode: END, funny: Boolean, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): RELATION
+  };
   trait Consumes[+START <: Node, +END <: Node] extends AbstractRelation[START, END] {
-    def funny: Boolean = item.properties("funny").asInstanceOf[BooleanPropertyValue]
+    def funny: Boolean = rawItem.properties("funny").asInstanceOf[BooleanPropertyValue]
   };
   object Eats extends RelationFactory[Animal, Eats, Animal] with ConsumesFactory[Animal, Eats, Animal] {
     val relationType = raw.RelationType("EATS");
     def wrap(relation: raw.Relation) = Eats(Animal.wrap(relation.startNode), relation, Animal.wrap(relation.endNode));
     def create(startNode: Animal, endNode: Animal, funny: Boolean): Eats = {
-      val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
-      wrapped.relation.properties.update("funny", funny);
+      val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
+      wrapped.rawItem.properties.update("funny", funny);
       wrapped
     };
     def merge(startNode: Animal, endNode: Animal, funny: Boolean, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Eats = {
-      val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
-      wrapped.relation.properties.update("funny", funny);
+      val wrapped = wrap(raw.Relation.merge(startNode.rawItem, relationType, endNode.rawItem, merge = merge, onMatch = onMatch));
+      wrapped.rawItem.properties.update("funny", funny);
       wrapped
     };
     def matches(startNode: Animal, endNode: Animal, funny: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): Eats = {
-      val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+      val wrapped = wrap(raw.Relation.matches(startNode.rawItem, relationType, endNode.rawItem, matches = matches));
       if (funny.isDefined)
-        wrapped.relation.properties.update("funny", funny.get)
+        wrapped.rawItem.properties.update("funny", funny.get)
       else
         ();
       wrapped
@@ -145,19 +191,19 @@ object ExampleSchemaTraits {
     val relationType = raw.RelationType("DRINKS");
     def wrap(relation: raw.Relation) = Drinks(Animal.wrap(relation.startNode), relation, Animal.wrap(relation.endNode));
     def create(startNode: Animal, endNode: Animal, funny: Boolean): Drinks = {
-      val wrapped = wrap(raw.Relation.create(startNode.node, relationType, endNode.node));
-      wrapped.relation.properties.update("funny", funny);
+      val wrapped = wrap(raw.Relation.create(startNode.rawItem, relationType, endNode.rawItem));
+      wrapped.rawItem.properties.update("funny", funny);
       wrapped
     };
     def merge(startNode: Animal, endNode: Animal, funny: Boolean, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Drinks = {
-      val wrapped = wrap(raw.Relation.merge(startNode.node, relationType, endNode.node, merge = merge, onMatch = onMatch));
-      wrapped.relation.properties.update("funny", funny);
+      val wrapped = wrap(raw.Relation.merge(startNode.rawItem, relationType, endNode.rawItem, merge = merge, onMatch = onMatch));
+      wrapped.rawItem.properties.update("funny", funny);
       wrapped
     };
     def matches(startNode: Animal, endNode: Animal, funny: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): Drinks = {
-      val wrapped = wrap(raw.Relation.matches(startNode.node, relationType, endNode.node, matches = matches));
+      val wrapped = wrap(raw.Relation.matches(startNode.rawItem, relationType, endNode.rawItem, matches = matches));
       if (funny.isDefined)
-        wrapped.relation.properties.update("funny", funny.get)
+        wrapped.rawItem.properties.update("funny", funny.get)
       else
         ();
       wrapped
@@ -166,57 +212,128 @@ object ExampleSchemaTraits {
     def mergeConsumes(startNode: Animal, endNode: Animal, funny: Boolean, merge: Set[PropertyKey] = Set.empty, onMatch: Set[PropertyKey] = Set.empty): Drinks = this.merge(startNode, endNode, funny, merge, onMatch);
     def matchesConsumes(startNode: Animal, endNode: Animal, funny: Option[Boolean] = None, matches: Set[PropertyKey] = Set.empty): Drinks = this.matches(startNode, endNode, funny, matches)
   };
-  case class Eats(startNode: Animal, relation: raw.Relation, endNode: Animal) extends Relation[Animal, Animal] with Consumes[Animal, Animal];
-  case class Drinks(startNode: Animal, relation: raw.Relation, endNode: Animal) extends Relation[Animal, Animal] with Consumes[Animal, Animal];
+  case class Eats(startNode: Animal, rawItem: raw.Relation, endNode: Animal) extends Relation[Animal, Animal] with Consumes[Animal, Animal];
+  case class Drinks(startNode: Animal, rawItem: raw.Relation, endNode: Animal) extends Relation[Animal, Animal] with Consumes[Animal, Animal];
+  object WholeExampleSchemaTraits {
+    def empty = new WholeExampleSchemaTraits(raw.Graph.empty);
+    def remove(items: Item*) = {
+      val wrapper = empty;
+      wrapper.remove(((items): _*));
+      wrapper
+    };
+    def apply(items: Item*) = {
+      val wrapper = empty;
+      wrapper.add(((items): _*));
+      wrapper
+    }
+  };
   object Zoo {
-    def empty = new Zoo(raw.Graph.empty)
+    def empty = new Zoo(raw.Graph.empty);
+    def remove(items: Item*) = {
+      val wrapper = empty;
+      wrapper.remove(((items): _*));
+      wrapper
+    };
+    def apply(items: Item*) = {
+      val wrapper = empty;
+      wrapper.add(((items): _*));
+      wrapper
+    }
+  };
+  case class WholeExampleSchemaTraits(graph: raw.Graph) extends Graph {
+    def fishs: Seq[Fish] = nodesAs(Fish);
+    def dogs: Seq[Dog] = nodesAs(Dog);
+    def eats: Seq[Eats] = relationsAs(Eats);
+    def drinks: Seq[Drinks] = relationsAs(Drinks);
+    def animals: Seq[Animal] = Seq.empty.++(fishs).++(dogs);
+    def animalRelations: (Seq[_$37] forSome { 
+      type _$37 <: Relation[Animal, Animal]
+    }) = Seq.empty.++(eats).++(drinks);
+    def animalAbstractRelations: (Seq[_$38] forSome { 
+      type _$38 <: AbstractRelation[Animal, Animal]
+    }) = Seq.empty.++(eats).++(drinks);
+    def animalHyperRelations: Seq[(HyperRelation[Animal, _$46, _$42, _$40, Animal] forSome { 
+      type _$46 <: (Relation[Animal, _$45] forSome { 
+        type _$45
+      });
+      type _$42 <: (HyperRelation[Animal, _$39, _$44, _$41, Animal] forSome { 
+        type _$39;
+        type _$44;
+        type _$41
+      });
+      type _$40 <: (Relation[_$43, Animal] forSome { 
+        type _$43
+      })
+    })] = Seq.empty;
+    def nodes: Seq[Node] = Seq.empty.++(fishs).++(dogs);
+    def relations: (Seq[_$58] forSome { 
+      type _$58 <: (Relation[_$55, _$52] forSome { 
+        type _$55;
+        type _$52
+      })
+    }) = Seq.empty.++(eats).++(drinks);
+    def abstractRelations: (Seq[_$49] forSome { 
+      type _$49 <: (AbstractRelation[_$54, _$51] forSome { 
+        type _$54;
+        type _$51
+      })
+    }) = Seq.empty.++(eats).++(drinks);
+    def hyperRelations: (Seq[_$48] forSome { 
+      type _$48 <: (HyperRelation[_$53, _$50, _$47, _$57, _$56] forSome { 
+        type _$53;
+        type _$50;
+        type _$47;
+        type _$57;
+        type _$56
+      })
+    }) = Seq.empty
   };
   case class Zoo(graph: raw.Graph) extends Graph {
-    def fishs: Set[Fish] = nodesAs(Fish);
-    def dogs: Set[Dog] = nodesAs(Dog);
-    def eats: Set[Eats] = relationsAs(Eats);
-    def drinks: Set[Drinks] = relationsAs(Drinks);
-    def animals: Set[Animal] = Set.empty.++(fishs).++(dogs);
-    def animalRelations: (Set[_$16] forSome { 
-      type _$16 <: Relation[Animal, Animal]
-    }) = Set.empty.++(eats).++(drinks);
-    def animalAbstractRelations: (Set[_$17] forSome { 
-      type _$17 <: AbstractRelation[Animal, Animal]
-    }) = Set.empty.++(eats).++(drinks);
-    def animalHyperRelations: Set[(HyperRelation[Animal, _$25, _$24, _$22, Animal] forSome { 
-      type _$25 <: (Relation[Animal, _$20] forSome { 
-        type _$20
+    def fishs: Seq[Fish] = nodesAs(Fish);
+    def dogs: Seq[Dog] = nodesAs(Dog);
+    def eats: Seq[Eats] = relationsAs(Eats);
+    def drinks: Seq[Drinks] = relationsAs(Drinks);
+    def animals: Seq[Animal] = Seq.empty.++(fishs).++(dogs);
+    def animalRelations: (Seq[_$59] forSome { 
+      type _$59 <: Relation[Animal, Animal]
+    }) = Seq.empty.++(eats).++(drinks);
+    def animalAbstractRelations: (Seq[_$60] forSome { 
+      type _$60 <: AbstractRelation[Animal, Animal]
+    }) = Seq.empty.++(eats).++(drinks);
+    def animalHyperRelations: Seq[(HyperRelation[Animal, _$68, _$64, _$62, Animal] forSome { 
+      type _$68 <: (Relation[Animal, _$67] forSome { 
+        type _$67
       });
-      type _$24 <: (HyperRelation[Animal, _$21, _$19, _$23, Animal] forSome { 
-        type _$21;
-        type _$19;
-        type _$23
+      type _$64 <: (HyperRelation[Animal, _$61, _$66, _$63, Animal] forSome { 
+        type _$61;
+        type _$66;
+        type _$63
       });
-      type _$22 <: (Relation[_$18, Animal] forSome { 
-        type _$18
+      type _$62 <: (Relation[_$65, Animal] forSome { 
+        type _$65
       })
-    })] = Set.empty;
-    def nodes: Set[Node] = Set.empty.++(fishs).++(dogs);
-    def relations: (Set[_$37] forSome { 
-      type _$37 <: (Relation[_$30, _$34] forSome { 
-        type _$30;
-        type _$34
+    })] = Seq.empty;
+    def nodes: Seq[Node] = Seq.empty.++(fishs).++(dogs);
+    def relations: (Seq[_$80] forSome { 
+      type _$80 <: (Relation[_$77, _$74] forSome { 
+        type _$77;
+        type _$74
       })
-    }) = Set.empty.++(eats).++(drinks);
-    def abstractRelations: (Set[_$32] forSome { 
-      type _$32 <: (AbstractRelation[_$29, _$33] forSome { 
-        type _$29;
-        type _$33
+    }) = Seq.empty.++(eats).++(drinks);
+    def abstractRelations: (Seq[_$71] forSome { 
+      type _$71 <: (AbstractRelation[_$76, _$73] forSome { 
+        type _$76;
+        type _$73
       })
-    }) = Set.empty.++(eats).++(drinks);
-    def hyperRelations: (Set[_$31] forSome { 
-      type _$31 <: (HyperRelation[_$28, _$27, _$26, _$36, _$35] forSome { 
-        type _$28;
-        type _$27;
-        type _$26;
-        type _$36;
-        type _$35
+    }) = Seq.empty.++(eats).++(drinks);
+    def hyperRelations: (Seq[_$70] forSome { 
+      type _$70 <: (HyperRelation[_$75, _$72, _$69, _$79, _$78] forSome { 
+        type _$75;
+        type _$72;
+        type _$69;
+        type _$79;
+        type _$78
       })
-    }) = Set.empty
+    }) = Seq.empty
   }
 }
