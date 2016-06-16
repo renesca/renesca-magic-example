@@ -124,25 +124,25 @@ object ExampleSchemaSubgraph {
     def foods: Seq[Food] = nodesAs(Food);
     def eats: Seq[Eats] = relationsAs(Eats);
     def nodes: Seq[Node] = Seq.empty.++(animals).++(foods);
-    def relations: (Seq[_$24] forSome { 
-      type _$24 <: (Relation[_$21, _$18] forSome { 
-        type _$21;
-        type _$18
-      })
-    }) = Seq.empty.++(eats);
-    def abstractRelations: (Seq[_$15] forSome { 
-      type _$15 <: (AbstractRelation[_$20, _$17] forSome { 
+    def relations: (Seq[_$13] forSome { 
+      type _$13 <: (Relation[_$20, _$17] forSome { 
         type _$20;
         type _$17
       })
     }) = Seq.empty.++(eats);
-    def hyperRelations: (Seq[_$14] forSome { 
-      type _$14 <: (HyperRelation[_$19, _$16, _$13, _$23, _$22] forSome { 
+    def abstractRelations: (Seq[_$22] forSome { 
+      type _$22 <: (AbstractRelation[_$19, _$16] forSome { 
         type _$19;
-        type _$16;
-        type _$13;
-        type _$23;
-        type _$22
+        type _$16
+      })
+    }) = Seq.empty.++(eats);
+    def hyperRelations: (Seq[_$21] forSome { 
+      type _$21 <: (HyperRelation[_$18, _$15, _$14, _$24, _$23] forSome { 
+        type _$18;
+        type _$15;
+        type _$14;
+        type _$24;
+        type _$23
       })
     }) = Seq.empty
   };
@@ -151,25 +151,25 @@ object ExampleSchemaSubgraph {
     def foods: Seq[Food] = nodesAs(Food);
     def eats: Seq[Eats] = relationsAs(Eats);
     def nodes: Seq[Node] = Seq.empty.++(animals).++(foods);
-    def relations: (Seq[_$36] forSome { 
-      type _$36 <: (Relation[_$33, _$30] forSome { 
-        type _$33;
-        type _$30
-      })
-    }) = Seq.empty.++(eats);
-    def abstractRelations: (Seq[_$27] forSome { 
-      type _$27 <: (AbstractRelation[_$32, _$29] forSome { 
+    def relations: (Seq[_$25] forSome { 
+      type _$25 <: (Relation[_$32, _$29] forSome { 
         type _$32;
         type _$29
       })
     }) = Seq.empty.++(eats);
-    def hyperRelations: (Seq[_$26] forSome { 
-      type _$26 <: (HyperRelation[_$31, _$28, _$25, _$35, _$34] forSome { 
+    def abstractRelations: (Seq[_$34] forSome { 
+      type _$34 <: (AbstractRelation[_$31, _$28] forSome { 
         type _$31;
-        type _$28;
-        type _$25;
-        type _$35;
-        type _$34
+        type _$28
+      })
+    }) = Seq.empty.++(eats);
+    def hyperRelations: (Seq[_$33] forSome { 
+      type _$33 <: (HyperRelation[_$30, _$27, _$26, _$36, _$35] forSome { 
+        type _$30;
+        type _$27;
+        type _$26;
+        type _$36;
+        type _$35
       })
     }) = Seq.empty
   }

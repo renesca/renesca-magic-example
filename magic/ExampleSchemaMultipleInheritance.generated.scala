@@ -249,65 +249,65 @@ object ExampleSchemaMultipleInheritance {
     def taggableAbstractRelations: (Seq[_$86] forSome { 
       type _$86 <: AbstractRelation[Taggable, Taggable]
     }) = Seq.empty;
-    def uuidHyperRelations: Seq[(HyperRelation[Uuid, _$94, _$90, _$88, Uuid] forSome { 
-      type _$94 <: (Relation[Uuid, _$93] forSome { 
-        type _$93
+    def uuidHyperRelations: Seq[(HyperRelation[Uuid, _$87, _$89, _$94, Uuid] forSome { 
+      type _$87 <: (Relation[Uuid, _$92] forSome { 
+        type _$92
       });
-      type _$90 <: (HyperRelation[Uuid, _$87, _$92, _$89, Uuid] forSome { 
-        type _$87;
-        type _$92;
-        type _$89
+      type _$89 <: (HyperRelation[Uuid, _$93, _$91, _$88, Uuid] forSome { 
+        type _$93;
+        type _$91;
+        type _$88
       });
-      type _$88 <: (Relation[_$91, Uuid] forSome { 
-        type _$91
+      type _$94 <: (Relation[_$90, Uuid] forSome { 
+        type _$90
       })
     })] = Seq.empty;
-    def timestampHyperRelations: Seq[(HyperRelation[Timestamp, _$102, _$98, _$96, Timestamp] forSome { 
-      type _$102 <: (Relation[Timestamp, _$101] forSome { 
-        type _$101
+    def timestampHyperRelations: Seq[(HyperRelation[Timestamp, _$95, _$97, _$102, Timestamp] forSome { 
+      type _$95 <: (Relation[Timestamp, _$100] forSome { 
+        type _$100
       });
-      type _$98 <: (HyperRelation[Timestamp, _$95, _$100, _$97, Timestamp] forSome { 
-        type _$95;
-        type _$100;
-        type _$97
+      type _$97 <: (HyperRelation[Timestamp, _$101, _$99, _$96, Timestamp] forSome { 
+        type _$101;
+        type _$99;
+        type _$96
       });
-      type _$96 <: (Relation[_$99, Timestamp] forSome { 
-        type _$99
+      type _$102 <: (Relation[_$98, Timestamp] forSome { 
+        type _$98
       })
     })] = Seq.empty;
-    def taggableHyperRelations: Seq[(HyperRelation[Taggable, _$110, _$106, _$104, Taggable] forSome { 
-      type _$110 <: (Relation[Taggable, _$109] forSome { 
-        type _$109
+    def taggableHyperRelations: Seq[(HyperRelation[Taggable, _$103, _$105, _$110, Taggable] forSome { 
+      type _$103 <: (Relation[Taggable, _$108] forSome { 
+        type _$108
       });
-      type _$106 <: (HyperRelation[Taggable, _$103, _$108, _$105, Taggable] forSome { 
-        type _$103;
-        type _$108;
-        type _$105
+      type _$105 <: (HyperRelation[Taggable, _$109, _$107, _$104, Taggable] forSome { 
+        type _$109;
+        type _$107;
+        type _$104
       });
-      type _$104 <: (Relation[_$107, Taggable] forSome { 
-        type _$107
+      type _$110 <: (Relation[_$106, Taggable] forSome { 
+        type _$106
       })
     })] = Seq.empty;
     def nodes: Seq[Node] = Seq.empty.++(articles).++(tags);
-    def relations: (Seq[_$122] forSome { 
-      type _$122 <: (Relation[_$119, _$116] forSome { 
-        type _$119;
-        type _$116
-      })
-    }) = Seq.empty.++(categorizes);
-    def abstractRelations: (Seq[_$113] forSome { 
-      type _$113 <: (AbstractRelation[_$118, _$115] forSome { 
+    def relations: (Seq[_$111] forSome { 
+      type _$111 <: (Relation[_$118, _$115] forSome { 
         type _$118;
         type _$115
       })
     }) = Seq.empty.++(categorizes);
-    def hyperRelations: (Seq[_$112] forSome { 
-      type _$112 <: (HyperRelation[_$117, _$114, _$111, _$121, _$120] forSome { 
+    def abstractRelations: (Seq[_$120] forSome { 
+      type _$120 <: (AbstractRelation[_$117, _$114] forSome { 
         type _$117;
-        type _$114;
-        type _$111;
-        type _$121;
-        type _$120
+        type _$114
+      })
+    }) = Seq.empty.++(categorizes);
+    def hyperRelations: (Seq[_$119] forSome { 
+      type _$119 <: (HyperRelation[_$116, _$113, _$112, _$122, _$121] forSome { 
+        type _$116;
+        type _$113;
+        type _$112;
+        type _$122;
+        type _$121
       })
     }) = Seq.empty
   };
@@ -336,65 +336,65 @@ object ExampleSchemaMultipleInheritance {
     def taggableAbstractRelations: (Seq[_$128] forSome { 
       type _$128 <: AbstractRelation[Taggable, Taggable]
     }) = Seq.empty;
-    def uuidHyperRelations: Seq[(HyperRelation[Uuid, _$136, _$132, _$130, Uuid] forSome { 
-      type _$136 <: (Relation[Uuid, _$135] forSome { 
-        type _$135
+    def uuidHyperRelations: Seq[(HyperRelation[Uuid, _$129, _$131, _$136, Uuid] forSome { 
+      type _$129 <: (Relation[Uuid, _$134] forSome { 
+        type _$134
       });
-      type _$132 <: (HyperRelation[Uuid, _$129, _$134, _$131, Uuid] forSome { 
-        type _$129;
-        type _$134;
-        type _$131
+      type _$131 <: (HyperRelation[Uuid, _$135, _$133, _$130, Uuid] forSome { 
+        type _$135;
+        type _$133;
+        type _$130
       });
-      type _$130 <: (Relation[_$133, Uuid] forSome { 
-        type _$133
+      type _$136 <: (Relation[_$132, Uuid] forSome { 
+        type _$132
       })
     })] = Seq.empty;
-    def timestampHyperRelations: Seq[(HyperRelation[Timestamp, _$144, _$140, _$138, Timestamp] forSome { 
-      type _$144 <: (Relation[Timestamp, _$143] forSome { 
-        type _$143
+    def timestampHyperRelations: Seq[(HyperRelation[Timestamp, _$137, _$139, _$144, Timestamp] forSome { 
+      type _$137 <: (Relation[Timestamp, _$142] forSome { 
+        type _$142
       });
-      type _$140 <: (HyperRelation[Timestamp, _$137, _$142, _$139, Timestamp] forSome { 
-        type _$137;
-        type _$142;
-        type _$139
+      type _$139 <: (HyperRelation[Timestamp, _$143, _$141, _$138, Timestamp] forSome { 
+        type _$143;
+        type _$141;
+        type _$138
       });
-      type _$138 <: (Relation[_$141, Timestamp] forSome { 
-        type _$141
+      type _$144 <: (Relation[_$140, Timestamp] forSome { 
+        type _$140
       })
     })] = Seq.empty;
-    def taggableHyperRelations: Seq[(HyperRelation[Taggable, _$152, _$148, _$146, Taggable] forSome { 
-      type _$152 <: (Relation[Taggable, _$151] forSome { 
-        type _$151
+    def taggableHyperRelations: Seq[(HyperRelation[Taggable, _$145, _$147, _$152, Taggable] forSome { 
+      type _$145 <: (Relation[Taggable, _$150] forSome { 
+        type _$150
       });
-      type _$148 <: (HyperRelation[Taggable, _$145, _$150, _$147, Taggable] forSome { 
-        type _$145;
-        type _$150;
-        type _$147
+      type _$147 <: (HyperRelation[Taggable, _$151, _$149, _$146, Taggable] forSome { 
+        type _$151;
+        type _$149;
+        type _$146
       });
-      type _$146 <: (Relation[_$149, Taggable] forSome { 
-        type _$149
+      type _$152 <: (Relation[_$148, Taggable] forSome { 
+        type _$148
       })
     })] = Seq.empty;
     def nodes: Seq[Node] = Seq.empty.++(articles).++(tags);
-    def relations: (Seq[_$164] forSome { 
-      type _$164 <: (Relation[_$161, _$158] forSome { 
-        type _$161;
-        type _$158
-      })
-    }) = Seq.empty.++(categorizes);
-    def abstractRelations: (Seq[_$155] forSome { 
-      type _$155 <: (AbstractRelation[_$160, _$157] forSome { 
+    def relations: (Seq[_$153] forSome { 
+      type _$153 <: (Relation[_$160, _$157] forSome { 
         type _$160;
         type _$157
       })
     }) = Seq.empty.++(categorizes);
-    def hyperRelations: (Seq[_$154] forSome { 
-      type _$154 <: (HyperRelation[_$159, _$156, _$153, _$163, _$162] forSome { 
+    def abstractRelations: (Seq[_$162] forSome { 
+      type _$162 <: (AbstractRelation[_$159, _$156] forSome { 
         type _$159;
-        type _$156;
-        type _$153;
-        type _$163;
-        type _$162
+        type _$156
+      })
+    }) = Seq.empty.++(categorizes);
+    def hyperRelations: (Seq[_$161] forSome { 
+      type _$161 <: (HyperRelation[_$158, _$155, _$154, _$164, _$163] forSome { 
+        type _$158;
+        type _$155;
+        type _$154;
+        type _$164;
+        type _$163
       })
     }) = Seq.empty
   }
