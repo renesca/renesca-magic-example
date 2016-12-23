@@ -111,25 +111,25 @@ object ExampleSchemaWrapping {
     def foods: Seq[Food] = nodesAs(Food);
     def eats: Seq[Eats] = relationsAs(Eats);
     def nodes: Seq[Node] = Seq.empty.++(animals).++(foods);
-    def relations: (Seq[_$1] forSome { 
-      type _$1 <: (Relation[_$8, _$5] forSome { 
+    def relations: (Seq[_$2] forSome { 
+      type _$2 <: (Relation[_$8, _$11] forSome { 
         type _$8;
-        type _$5
+        type _$11
       })
     }) = Seq.empty.++(eats);
     def abstractRelations: (Seq[_$10] forSome { 
-      type _$10 <: (AbstractRelation[_$7, _$4] forSome { 
+      type _$10 <: (AbstractRelation[_$7, _$5] forSome { 
         type _$7;
-        type _$4
+        type _$5
       })
     }) = Seq.empty.++(eats);
     def hyperRelations: (Seq[_$9] forSome { 
-      type _$9 <: (HyperRelation[_$6, _$3, _$2, _$12, _$11] forSome { 
+      type _$9 <: (HyperRelation[_$6, _$4, _$3, _$1, _$12] forSome { 
         type _$6;
+        type _$4;
         type _$3;
-        type _$2;
-        type _$12;
-        type _$11
+        type _$1;
+        type _$12
       })
     }) = Seq.empty
   }

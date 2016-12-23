@@ -252,39 +252,39 @@ object ExampleSchemaTraits {
     def animalAbstractRelations: (Seq[_$38] forSome { 
       type _$38 <: AbstractRelation[Animal, Animal]
     }) = Seq.empty.++(eats).++(drinks);
-    def animalHyperRelations: Seq[(HyperRelation[Animal, _$39, _$41, _$46, Animal] forSome { 
-      type _$39 <: (Relation[Animal, _$44] forSome { 
-        type _$44
+    def animalHyperRelations: Seq[(HyperRelation[Animal, _$39, _$46, _$45, Animal] forSome { 
+      type _$39 <: (Relation[Animal, _$43] forSome { 
+        type _$43
       });
-      type _$41 <: (HyperRelation[Animal, _$45, _$43, _$40, Animal] forSome { 
-        type _$45;
-        type _$43;
+      type _$46 <: (HyperRelation[Animal, _$44, _$42, _$40, Animal] forSome { 
+        type _$44;
+        type _$42;
         type _$40
       });
-      type _$46 <: (Relation[_$42, Animal] forSome { 
-        type _$42
+      type _$45 <: (Relation[_$41, Animal] forSome { 
+        type _$41
       })
     })] = Seq.empty;
     def nodes: Seq[Node] = Seq.empty.++(fishs).++(dogs);
-    def relations: (Seq[_$47] forSome { 
-      type _$47 <: (Relation[_$54, _$51] forSome { 
+    def relations: (Seq[_$48] forSome { 
+      type _$48 <: (Relation[_$54, _$57] forSome { 
         type _$54;
-        type _$51
+        type _$57
       })
     }) = Seq.empty.++(eats).++(drinks);
     def abstractRelations: (Seq[_$56] forSome { 
-      type _$56 <: (AbstractRelation[_$53, _$50] forSome { 
+      type _$56 <: (AbstractRelation[_$53, _$51] forSome { 
         type _$53;
-        type _$50
+        type _$51
       })
     }) = Seq.empty.++(eats).++(drinks);
     def hyperRelations: (Seq[_$55] forSome { 
-      type _$55 <: (HyperRelation[_$52, _$49, _$48, _$58, _$57] forSome { 
+      type _$55 <: (HyperRelation[_$52, _$50, _$49, _$47, _$58] forSome { 
         type _$52;
+        type _$50;
         type _$49;
-        type _$48;
-        type _$58;
-        type _$57
+        type _$47;
+        type _$58
       })
     }) = Seq.empty
   };
@@ -300,39 +300,39 @@ object ExampleSchemaTraits {
     def animalAbstractRelations: (Seq[_$60] forSome { 
       type _$60 <: AbstractRelation[Animal, Animal]
     }) = Seq.empty.++(eats).++(drinks);
-    def animalHyperRelations: Seq[(HyperRelation[Animal, _$61, _$63, _$68, Animal] forSome { 
-      type _$61 <: (Relation[Animal, _$66] forSome { 
-        type _$66
+    def animalHyperRelations: Seq[(HyperRelation[Animal, _$61, _$68, _$67, Animal] forSome { 
+      type _$61 <: (Relation[Animal, _$65] forSome { 
+        type _$65
       });
-      type _$63 <: (HyperRelation[Animal, _$67, _$65, _$62, Animal] forSome { 
-        type _$67;
-        type _$65;
+      type _$68 <: (HyperRelation[Animal, _$66, _$64, _$62, Animal] forSome { 
+        type _$66;
+        type _$64;
         type _$62
       });
-      type _$68 <: (Relation[_$64, Animal] forSome { 
-        type _$64
+      type _$67 <: (Relation[_$63, Animal] forSome { 
+        type _$63
       })
     })] = Seq.empty;
     def nodes: Seq[Node] = Seq.empty.++(fishs).++(dogs);
-    def relations: (Seq[_$69] forSome { 
-      type _$69 <: (Relation[_$76, _$73] forSome { 
+    def relations: (Seq[_$70] forSome { 
+      type _$70 <: (Relation[_$76, _$79] forSome { 
         type _$76;
-        type _$73
+        type _$79
       })
     }) = Seq.empty.++(eats).++(drinks);
     def abstractRelations: (Seq[_$78] forSome { 
-      type _$78 <: (AbstractRelation[_$75, _$72] forSome { 
+      type _$78 <: (AbstractRelation[_$75, _$73] forSome { 
         type _$75;
-        type _$72
+        type _$73
       })
     }) = Seq.empty.++(eats).++(drinks);
     def hyperRelations: (Seq[_$77] forSome { 
-      type _$77 <: (HyperRelation[_$74, _$71, _$70, _$80, _$79] forSome { 
+      type _$77 <: (HyperRelation[_$74, _$72, _$71, _$69, _$80] forSome { 
         type _$74;
+        type _$72;
         type _$71;
-        type _$70;
-        type _$80;
-        type _$79
+        type _$69;
+        type _$80
       })
     }) = Seq.empty
   }
